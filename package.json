@@ -13,7 +13,6 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-scripts": "5.0.1",
-    "@ngx-smz/core": "21.1.16"
   },
   "devDependencies": {
     "@types/react": "18.2.38",
