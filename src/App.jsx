@@ -1,2132 +1,1335 @@
-// ═══════════════════════════════════════════════════════════════════════
-// REMAK Sale Support Chatbot – Complete JSX Demo v2.0
-// Brand: #6DB02B (xanh lá) | #E8380D (cam) | #2D5016 (dark green)
-// Fonts: Lexend + Be Vietnam Pro + JetBrains Mono
-// ═══════════════════════════════════════════════════════════════════════
+import { useState } from "react";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  LayoutDashboard, MessageSquare, Package, FileText, BookOpen,
-  Settings, Users, Bell, ChevronDown, Bot, X, Send, Paperclip,
-  Search, Filter, Globe, ZapIcon, ArrowUp, UserCheck, ThumbsUp,
-  ThumbsDown, Tag, CheckCircle, Clock, AlertCircle, Upload,
-  File, Trash2, Edit3, Plus, ChevronRight, MoreHorizontal,
-  MessageCircle, RefreshCw, Eye, Activity, TrendingUp, Zap,
-  LogOut, ChevronLeft, Play, RotateCcw, GitCompare, Layers,
-  Hash, BarChart2
-} from "lucide-react";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area
-} from "recharts";
-
-// ═══════════════════════════════════════════════════════════════════════
-// GOOGLE FONTS INJECTION
-// ═══════════════════════════════════════════════════════════════════════
-const FontInjector = () => {
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-    const style = document.createElement("style");
-    style.textContent = `
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Be Vietnam Pro', system-ui, sans-serif; background: #FAFAFA; color: #1C1C1C; }
-      h1, h2, h3, h4, h5, h6 { font-family: 'Lexend', sans-serif; }
-      .font-mono { font-family: 'JetBrains Mono', monospace !important; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-      @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-      @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-      @keyframes bounce1 { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-      @keyframes bounce2 { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-      @keyframes bounce3 { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
-      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-      @keyframes progressBar { from { width: 0%; } to { width: 100%; } }
-      @keyframes toastSlide { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-      @keyframes countUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-      .animate-slideIn { animation: slideIn 0.3s ease-out; }
-      .animate-scaleIn { animation: scaleIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-      .animate-pulse-custom { animation: pulse 1.5s ease-in-out infinite; }
-      .animate-countUp { animation: countUp 0.6s ease-out; }
-      .dot1 { animation: bounce1 1.2s ease-in-out infinite; }
-      .dot2 { animation: bounce2 1.2s ease-in-out 0.16s infinite; }
-      .dot3 { animation: bounce3 1.2s ease-in-out 0.32s infinite; }
-      .sidebar-item { transition: background 0.15s ease, color 0.15s ease; cursor: pointer; }
-      .sidebar-item:hover { background: #4A7C1F; }
-      .card-hover { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-      .card-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-      .progress-animate { animation: progressBar 2s linear forwards; }
-      .toast-animate { animation: toastSlide 0.3s ease-out; }
-      ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #f1f1f1; }
-      ::-webkit-scrollbar-thumb { background: #C5E09A; border-radius: 2px; }
-      .tab-active { border-bottom: 2px solid #6DB02B; color: #4A7C1F; font-weight: 600; }
-      .diff-added { background: #E8F5E9; border-left: 3px solid #4CAF50; }
-      .diff-removed { background: #FFEBEE; border-left: 3px solid #F44336; }
-    `;
-    document.head.appendChild(style);
-  }, []);
-  return null;
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
+const T = {
+  green:      "#6DB02B",
+  greenDark:  "#538A1F",
+  greenLight: "#EBF5E0",
+  greenMid:   "#C2E29A",
+  orange:     "#E8380D",
+  orangeLight:"#FDECEA",
+  sidebar:    "#1A1F14",
+  sidebarHov: "#252C1C",
+  sidebarAct: "#2D3A1E",
+  bg:         "#F4F6F3",
+  card:       "#FFFFFF",
+  border:     "#E3E8DC",
+  text:       "#1C2117",
+  textMid:    "#4A5540",
+  textLight:  "#8A9585",
+  yellow:     "#F59E0B",
+  yellowLight:"#FEF3C7",
+  blue:       "#2563EB",
+  blueLight:  "#EFF6FF",
+  red:        "#DC2626",
+  redLight:   "#FEF2F2",
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// MOCK DATA
-// ═══════════════════════════════════════════════════════════════════════
-const mockUsers = [
-  { id: "u-1", name: "Nguyễn Admin", email: "admin@remak.vn", role: "admin", status: "active" },
-  { id: "u-2", name: "Trần Hùng", email: "hung@remak.vn", role: "trainer", status: "active" },
-  { id: "u-3", name: "Lê Thị Lan", email: "lan@remak.vn", role: "sales", status: "active" },
-  { id: "u-4", name: "Phạm CS Hương", email: "huong@remak.vn", role: "cs", status: "active" },
-  { id: "u-5", name: "Võ Minh Quân", email: "quan@remak.vn", role: "sales", status: "inactive" },
-];
-
-const mockDashboard = {
-  todayConversations: 47, weekConversations: 312,
-  handoffRate: 18.5, resolutionByAI: 81.5,
-  pendingQuotes: 8, avgResponseTimeSec: 1.2, activeNow: 6,
-  trend: [
-    { date: "01/06", count: 38 }, { date: "02/06", count: 45 },
-    { date: "03/06", count: 41 }, { date: "04/06", count: 52 },
-    { date: "05/06", count: 49 }, { date: "06/06", count: 47 },
-    { date: "07/06", count: 23 },
-  ],
-  topProducts: [
-    { name: "Stonewool 50mm", count: 89 }, { name: "Stonewool 75mm", count: 67 },
-    { name: "Mút trứng 30mm", count: 54 }, { name: "AirReflex", count: 43 },
-    { name: "Bông khoáng", count: 38 },
-  ],
-  topQuestions: [
-    { name: "Cách nhiệt mái tôn dày bao nhiêu?", count: 34 },
-    { name: "Stonewool vs Bông khoáng khác gì?", count: 28 },
-    { name: "Fire rating A1 nghĩa là gì?", count: 24 },
-    { name: "NRC 0.9 có tốt không?", count: 19 },
-    { name: "Tiêu âm phòng thu cần gì?", count: 17 },
-  ],
-};
-
-const mockConversations = [
-  {
-    id: "conv-001", channel: "web_widget", status: "active",
-    visitorName: "Nguyễn Văn Minh", visitorPhone: "09***456",
-    lastMessage: "Tôi cần báo giá cho 500m² mái nhà xưởng",
-    lastMessageAt: "5 phút trước", messageCount: 12,
-    tags: ["lead-hot", "interest-stonewool"],
-    assignedTo: null, quoteId: "Q-2026-001",
-    intentsDetected: ["product_inquiry", "price_check"],
-    createdAt: "2026-06-07T08:30:00",
-  },
-  {
-    id: "conv-002", channel: "zalo_oa", status: "handoff",
-    visitorName: "Trần Thị Lan", visitorPhone: "09***789",
-    lastMessage: "Cho tôi gặp nhân viên tư vấn trực tiếp",
-    lastMessageAt: "12 phút trước", messageCount: 8,
-    tags: ["follow-up", "price-sensitive"],
-    assignedTo: mockUsers[3],
-    intentsDetected: ["human_handoff"], createdAt: "2026-06-07T09:15:00",
-  },
-  {
-    id: "conv-003", channel: "web_widget", status: "resolved",
-    visitorName: "Công ty XYZ",
-    lastMessage: "Cảm ơn, tôi đã hiểu rồi",
-    lastMessageAt: "1 giờ trước", messageCount: 6,
-    tags: ["lead-warm", "interest-airreflex"],
-    assignedTo: null,
-    intentsDetected: ["product_inquiry"], createdAt: "2026-06-07T07:00:00",
-  },
-  {
-    id: "conv-004", channel: "zalo_oa", status: "active",
-    visitorName: "Kỹ sư Hải", visitorPhone: "09***321",
-    lastMessage: "NRC 0.9 có đủ cho phòng thu âm không?",
-    lastMessageAt: "2 phút trước", messageCount: 4,
-    tags: ["lead-warm", "project-studio"],
-    assignedTo: null,
-    intentsDetected: ["technical_spec"], createdAt: "2026-06-07T10:05:00",
-  },
-];
-
-const mockMessages = [
-  {
-    id: "msg-001", role: "assistant",
-    content: "Xin chào! Tôi là trợ lý tư vấn của **Remak**. Tôi có thể giúp bạn tìm giải pháp cách âm, cách nhiệt và chống cháy phù hợp nhất. Bạn đang cần tư vấn về công trình nào?",
-    timestamp: "08:30", agentUsed: "chat",
-  },
-  {
-    id: "msg-002", role: "user",
-    content: "Bông đá Stonewool dày bao nhiêu mm để cách nhiệt mái tôn nhà xưởng 500m²?",
-    timestamp: "08:31",
-  },
-  {
-    id: "msg-003", role: "assistant",
-    content: "Để cách nhiệt mái tôn nhà xưởng hiệu quả, bạn nên sử dụng **Remak® Stonewool** với các option sau:\n\n• **50mm** – R-value: 1.25 m²K/W, phù hợp khu vực khí hậu trung bình\n• **75mm** – R-value: 1.87 m²K/W, khuyến nghị cho nhà xưởng có lò hoặc vùng nắng nóng\n\nCả hai đều đạt **Fire Rating A1** theo EN 13501-1 (không cháy).",
-    timestamp: "08:31", agentUsed: "technical", confidenceScore: 0.94,
-    citations: [{
-      documentName: "Catalogue Stonewool 2024", pageRef: "Trang 12",
-      excerpt: "Stonewool 50mm: R-value 1.25 m²K/W, Fire Rating A1, NRC 0.75",
-      relevanceScore: 0.94,
-    }],
-    products: [
-      {
-        sku: "SW-50", name: "Remak® Stonewool 50mm", category: "Cách nhiệt",
-        price: 85000, unit: "m²",
-        specs: { "R-value": "1.25", "Fire Rating": "A1", NRC: "0.75", thickness: "50mm" },
-        isRecommended: false,
-      },
-      {
-        sku: "SW-75", name: "Remak® Stonewool 75mm", category: "Cách nhiệt",
-        price: 115000, unit: "m²",
-        specs: { "R-value": "1.87", "Fire Rating": "A1", NRC: "0.80", thickness: "75mm" },
-        isRecommended: true,
-      },
-    ],
-  },
-  {
-    id: "msg-004", role: "user",
-    content: "OK, tôi cần 500m² Stonewool 75mm và khoảng 200m² mút trứng 30mm. Cho tôi báo giá.",
-    timestamp: "08:35",
-  },
-  {
-    id: "msg-005", role: "assistant",
-    content: "Tôi đã tổng hợp báo giá sơ bộ cho bạn:\n\n• Stonewool 75mm × 500m²: **57,500,000 VND**\n• Mút trứng 30mm × 200m²: **9,000,000 VND**\n\nTổng cộng (chưa VAT): **66,500,000 VND**\n\nBản báo giá đã được tạo và gửi đến đội Sales để xem xét. Bạn có thể cho tôi biết tên công ty và thông tin liên hệ để hoàn thiện báo giá không?",
-    timestamp: "08:36", agentUsed: "order", confidenceScore: 0.91,
-  },
-];
-
-const mockQuotes = [
-  {
-    id: "Q-2026-001", conversationId: "conv-001", status: "draft",
-    customerInfo: { name: "Công ty TNHH ABC Construction", contact: "Anh Nguyễn Văn Minh", phone: "0909123456", email: "minh@abc.com.vn", project: "Nhà xưởng Bình Dương – 500m²" },
-    lineItems: [
-      { id: "li-1", sku: "SW-75", productName: "Remak® Stonewool 75mm", quantity: 500, unit: "m²", unitPrice: 115000, subtotal: 57500000, note: "" },
-      { id: "li-2", sku: "ME-30", productName: "Mút trứng Remak® 30mm", quantity: 200, unit: "m²", unitPrice: 45000, subtotal: 9000000, note: "" },
-    ],
-    subtotal: 66500000, discountPercent: 0, discountAmount: 0,
-    taxPercent: 10, taxAmount: 6650000, total: 73150000, currency: "VND",
-    validityDays: 30, notes: "Báo giá chưa bao gồm chi phí vận chuyển và lắp đặt",
-    createdAt: "2026-06-07T09:45:00",
-  },
-  {
-    id: "Q-2026-002", conversationId: "conv-003", status: "assigned",
-    customerInfo: { name: "Công ty CP XYZ Studio", contact: "Chị Ngọc Ánh", phone: "0912987654", project: "Phòng thu âm tầng 3 – 80m²" },
-    lineItems: [
-      { id: "li-1", sku: "ME-30", productName: "Mút trứng Remak® 30mm", quantity: 80, unit: "m²", unitPrice: 45000, subtotal: 3600000, note: "" },
-    ],
-    subtotal: 3600000, discountPercent: 0, discountAmount: 0,
-    taxPercent: 10, taxAmount: 360000, total: 3960000, currency: "VND",
-    validityDays: 30, assignedTo: mockUsers[2], createdAt: "2026-06-07T07:30:00",
-  },
-];
-
-const mockDocuments = [
-  { id: "doc-001", fileName: "Catalogue_Stonewool_2024.pdf", fileType: "pdf", fileSize: 5242880, category: "Cách nhiệt", tags: ["Stonewool", "Bông đá", "Catalogue"], status: "active", version: 2, chunkCount: 147, uploadedBy: "Trần Hùng", uploadedAt: "2026-05-15T10:00:00", lastIndexedAt: "2026-05-15T10:12:00" },
-  { id: "doc-002", fileName: "Bang_gia_Q2_2026.xlsx", fileType: "excel", fileSize: 524288, category: "Bảng giá", tags: ["Giá cả", "Q2 2026"], status: "active", version: 1, chunkCount: 12, uploadedBy: "Trần Hùng", uploadedAt: "2026-06-01T09:00:00", lastIndexedAt: "2026-06-01T09:03:00" },
-  { id: "doc-003", fileName: "FAQ_Ky_Thuat_Cach_Am.pdf", fileType: "pdf", fileSize: 2097152, category: "Cách âm", tags: ["FAQ", "Kỹ thuật", "STC"], status: "processing", version: 1, chunkCount: undefined, uploadedBy: "Trần Hùng", uploadedAt: "2026-06-07T10:30:00" },
-  { id: "doc-004", fileName: "Datasheet_AirReflex_v3.pdf", fileType: "pdf", fileSize: 1048576, category: "Cách nhiệt", tags: ["AirReflex", "Datasheet"], status: "error", version: 1, uploadedBy: "Trần Hùng", uploadedAt: "2026-06-06T14:00:00", errorMessage: "File bị mã hóa, không thể parse nội dung" },
-];
-
-const mockRoutingRules = [
-  { id: "rr-1", name: "Đơn lớn → Senior Sales", conditionType: "total_value", operator: ">=", value: 100000000, assignTo: mockUsers[2], priority: 1, isActive: true },
-  { id: "rr-2", name: "Đơn trung → Sales Team", conditionType: "total_value", operator: ">=", value: 10000000, assignTo: mockUsers[2], priority: 2, isActive: true },
-  { id: "rr-3", name: "Chống cháy → Specialist", conditionType: "category", operator: "==", value: "Chống cháy", assignTo: mockUsers[2], priority: 3, isActive: true },
-];
-
-const mockPrompts = [
-  { id: "p-1", name: "System Prompt Chính", type: "system_prompt", version: 3, lastModified: "07/06/2026", content: "Bạn là trợ lý tư vấn chuyên nghiệp của Remak – công ty hàng đầu về vật liệu cách âm, cách nhiệt, tiêu âm và chống cháy tại Việt Nam.\n\nNhiệm vụ:\n- Tư vấn kỹ thuật chính xác dựa trên catalogue sản phẩm\n- Đề xuất giải pháp phù hợp với nhu cầu {{use_case}}\n- Trả lời bằng tiếng Việt, chuyên nghiệp nhưng thân thiện\n- Luôn đính kèm citation khi trích dẫn thông số kỹ thuật\n\nThông tin khách hàng: {{customer_name}}\nSản phẩm quan tâm: {{product_list}}" },
-  { id: "p-2", name: "Technical Prompt", type: "technical_prompt", version: 2, lastModified: "05/06/2026", content: "Khi trả lời câu hỏi kỹ thuật:\n1. Trích dẫn thông số từ catalogue chính xác\n2. Ghi rõ nguồn: [Tên tài liệu | Trang X]\n3. So sánh các option nếu có nhiều lựa chọn\n4. Đề xuất option tốt nhất dựa trên {{use_case}}" },
-  { id: "p-3", name: "Pricing Prompt", type: "pricing_prompt", version: 1, lastModified: "01/06/2026", content: "Khi tính giá:\n- Lấy giá từ bảng giá hiện tại\n- Áp dụng discount nếu có quy tắc phù hợp\n- Tạo draft quote với đầy đủ line items\n- Ghi rõ: chưa bao gồm VAT và vận chuyển" },
-  { id: "p-4", name: "Handoff Prompt", type: "handoff_prompt", version: 2, lastModified: "03/06/2026", content: "Khi chuyển giao cho nhân viên:\n1. Tóm tắt nhu cầu khách hàng\n2. Liệt kê các sản phẩm đã tư vấn\n3. Ghi lý do handoff: {{handoff_reason}}\n4. Thông báo cho khách: 'Tôi sẽ kết nối bạn với chuyên viên ngay bây giờ...'" },
-  { id: "p-5", name: "Greeting Prompt", type: "greeting_prompt", version: 1, lastModified: "01/06/2026", content: "Lời chào đầu cuộc trò chuyện:\n'Xin chào {{customer_name}}! Tôi là trợ lý AI của Remak. Tôi có thể giúp bạn tìm giải pháp [tiêu âm/cách nhiệt/chống cháy] phù hợp cho công trình của bạn. Hãy cho tôi biết bạn đang cần gì?'" },
-];
-
-const mockChunks = [
-  { id: "chunk-001", docName: "Catalogue Stonewool 2024", content: "Remak® Stonewool 50mm: R-value 1.25 m²K/W, Density 60 kg/m³, Fire Rating A1 theo EN 13501-1", score: 0.94, relevant: true },
-  { id: "chunk-002", docName: "Catalogue Stonewool 2024", content: "Ứng dụng: Mái tôn nhà xưởng, kho lạnh, tòa nhà văn phòng. Độ dày khuyến nghị: 50-100mm", score: 0.89, relevant: true },
-  { id: "chunk-003", docName: "FAQ Kỹ thuật Cách âm", content: "NRC (Noise Reduction Coefficient): Hệ số hấp thụ âm từ 0-1. NRC 0.9 nghĩa là hấp thụ 90% âm thanh", score: 0.85, relevant: null },
-  { id: "chunk-004", docName: "Bảng giá Q2 2026", content: "SW-50: 85,000 VND/m², SW-75: 115,000 VND/m², ME-30: 45,000 VND/m²", score: 0.78, relevant: null },
-];
-
-const promptVersions = {
-  "p-1": [
-    { version: 3, date: "07/06/2026", content: "Bạn là trợ lý tư vấn chuyên nghiệp của Remak – công ty hàng đầu về vật liệu cách âm, cách nhiệt, tiêu âm và chống cháy tại Việt Nam.\n\nNhiệm vụ:\n- Tư vấn kỹ thuật chính xác dựa trên catalogue sản phẩm\n- Đề xuất giải pháp phù hợp với nhu cầu {{use_case}}\n- Trả lời bằng tiếng Việt, chuyên nghiệp nhưng thân thiện\n- Luôn đính kèm citation khi trích dẫn thông số kỹ thuật" },
-    { version: 2, date: "01/06/2026", content: "Bạn là trợ lý tư vấn của Remak.\nNhiệm vụ: Tư vấn sản phẩm cách âm, cách nhiệt.\nTrả lời bằng tiếng Việt." },
-    { version: 1, date: "15/05/2026", content: "You are a sales assistant for Remak building materials." },
-  ]
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// UTILITY FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════
-const formatVND = (amount) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount).replace("₫", "đ");
-
-const formatBytes = (bytes) => {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
-const getInitials = (name) => name.split(" ").map(n => n[0]).slice(-2).join("").toUpperCase();
-
-const hashColor = (id) => {
-  const colors = ["#4A7C1F", "#E8380D", "#1565C0", "#6A1B9A", "#00695C", "#E65100"];
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// SHARED COMPONENTS
-// ═══════════════════════════════════════════════════════════════════════
-
-// Status Badge
-const StatusBadge = ({ status }) => {
-  const styles = {
-    active: "bg-green-100 text-green-700 border border-green-200",
-    handoff: "bg-orange-100 text-orange-700 border border-orange-200",
-    resolved: "bg-gray-100 text-gray-500 border border-gray-200",
-    abandoned: "bg-red-50 text-red-500 border border-red-100",
-    draft: "bg-yellow-100 text-yellow-800 border border-yellow-200",
-    assigned: "bg-blue-100 text-blue-800 border border-blue-200",
-    sent: "bg-green-100 text-green-800 border border-green-200",
-    cancelled: "bg-gray-100 text-gray-500 border border-gray-200",
-    uploading: "bg-blue-50 text-blue-600 border border-blue-100 animate-pulse-custom",
-    processing: "bg-yellow-50 text-yellow-700 border border-yellow-200 animate-pulse-custom",
-    error: "bg-red-100 text-red-700 border border-red-200",
-    archived: "bg-gray-100 text-gray-500 border border-gray-200",
-    admin: "bg-purple-100 text-purple-700", trainer: "bg-blue-100 text-blue-700",
-    sales: "bg-green-100 text-green-700", cs: "bg-orange-100 text-orange-700",
-    inactive: "bg-gray-100 text-gray-500",
+// ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
+const Badge = ({ status }) => {
+  const cfg = {
+    active:      { bg: T.greenLight,   color: T.greenDark,  label: "Hoạt động" },
+    inactive:    { bg: T.redLight,     color: T.red,        label: "Bị khóa" },
+    processing:  { bg: T.yellowLight,  color: "#92400E",    label: "Đang xử lý" },
+    error:       { bg: T.redLight,     color: T.red,        label: "Lỗi" },
+    admin:       { bg: "#F0EDFF",      color: "#5B21B6",    label: "Admin" },
+    sales:       { bg: T.blueLight,    color: T.blue,       label: "Sales" },
+    trainer:     { bg: T.greenLight,   color: T.greenDark,  label: "Trainer" },
+    cs:          { bg: "#FFF7ED",      color: "#9A3412",    label: "CS" },
+    highest:     { bg: T.redLight,     color: T.red,        label: "HIGHEST" },
   };
-  const labels = {
-    active: "Active", handoff: "Handoff", resolved: "Resolved", abandoned: "Abandoned",
-    draft: "Nháp", assigned: "Đã giao", sent: "Đã gửi", cancelled: "Hủy",
-    uploading: "⬆ Đang tải", processing: "⚙ Đang xử lý", error: "❌ Lỗi",
-    archived: "Lưu trữ", admin: "Admin", trainer: "Trainer",
-    sales: "Sales", cs: "CS", inactive: "Inactive",
+  const c = cfg[status] || cfg.active;
+  return (
+    <span style={{
+      background: c.bg, color: c.color,
+      fontSize: 11, fontWeight: 700, padding: "2px 8px",
+      borderRadius: 4, letterSpacing: "0.04em", textTransform: "uppercase",
+      display: "inline-block", whiteSpace: "nowrap"
+    }}>{c.label}</span>
+  );
+};
+
+const Avatar = ({ name, size = 32, bg = T.green }) => (
+  <div style={{
+    width: size, height: size, borderRadius: "50%",
+    background: bg, color: "#fff",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: size * 0.38, fontWeight: 700, flexShrink: 0
+  }}>
+    {name?.charAt(0)?.toUpperCase()}
+  </div>
+);
+
+const Card = ({ children, style = {} }) => (
+  <div style={{
+    background: T.card, border: `1px solid ${T.border}`,
+    borderRadius: 10, ...style
+  }}>
+    {children}
+  </div>
+);
+
+const Btn = ({ children, variant = "primary", size = "md", onClick, style = {}, disabled }) => {
+  const base = {
+    border: "none", cursor: disabled ? "not-allowed" : "pointer",
+    fontWeight: 600, borderRadius: 7, display: "inline-flex",
+    alignItems: "center", gap: 6, transition: "opacity .15s",
+    opacity: disabled ? 0.5 : 1,
+    fontSize: size === "sm" ? 12 : 13,
+    padding: size === "sm" ? "5px 12px" : "8px 16px",
+  };
+  const variants = {
+    primary:   { background: T.green,  color: "#fff" },
+    danger:    { background: T.orange, color: "#fff" },
+    secondary: { background: T.bg,     color: T.text, border: `1px solid ${T.border}` },
+    ghost:     { background: "transparent", color: T.textMid },
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] || "bg-gray-100 text-gray-600"}`}>
-      {labels[status] || status}
-    </span>
+    <button style={{ ...base, ...variants[variant], ...style }} onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
   );
 };
 
-// Tag Badge
-const TagBadge = ({ tag }) => {
-  const styles = {
-    "lead-hot": "bg-red-100 text-red-700 border border-red-200",
-    "lead-warm": "bg-orange-100 text-orange-700 border border-orange-200",
-    "lead-cold": "bg-gray-100 text-gray-600 border border-gray-200",
-    "follow-up": "bg-purple-100 text-purple-700 border border-purple-200",
-    "price-sensitive": "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    "vip": "bg-amber-100 text-amber-700 border border-amber-200",
-    "project-studio": "bg-blue-100 text-blue-700 border border-blue-200",
-    "project-factory": "bg-teal-100 text-teal-700 border border-teal-200",
-    "interest-stonewool": "bg-green-100 text-green-700 border border-green-200",
-    "interest-airreflex": "bg-cyan-100 text-cyan-700 border border-cyan-200",
-  };
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${styles[tag] || "bg-gray-100 text-gray-600 border border-gray-200"}`}>
-      {tag}
-    </span>
-  );
-};
+const Input = ({ placeholder, value, onChange, icon, style = {} }) => (
+  <div style={{ position: "relative", ...style }}>
+    {icon && <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: T.textLight }}>{icon}</span>}
+    <input
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      style={{
+        width: "100%", border: `1px solid ${T.border}`, borderRadius: 7,
+        padding: icon ? "8px 12px 8px 32px" : "8px 12px",
+        fontSize: 13, color: T.text, background: T.card,
+        outline: "none", boxSizing: "border-box",
+      }}
+    />
+  </div>
+);
 
-// Channel Icon
-const ChannelIcon = ({ channel, size = 16 }) => {
-  if (channel === "zalo_oa") return (
-    <span style={{ width: size, height: size, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#0068FF", borderRadius: 4, color: "white", fontSize: 9, fontWeight: 700, minWidth: size }}>ZL</span>
-  );
-  return <Globe size={size} style={{ color: "#4A7C1F" }} />;
-};
+const StatCard = ({ label, value, color = T.text, sub }) => (
+  <Card style={{ padding: "18px 22px", flex: 1 }}>
+    <div style={{ fontSize: 28, fontWeight: 800, color }}>{value}</div>
+    <div style={{ fontSize: 12, color: T.textLight, marginTop: 2 }}>{label}</div>
+    {sub && <div style={{ fontSize: 11, color: T.textMid, marginTop: 4 }}>{sub}</div>}
+  </Card>
+);
 
-// User Avatar
-const UserAvatar = ({ user, size = 32 }) => {
-  if (!user) return null;
-  const bg = hashColor(user.id);
-  return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: bg, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.35, fontWeight: 600, fontFamily: "Lexend", flexShrink: 0 }}>
-      {getInitials(user.name)}
-    </div>
-  );
-};
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+const MENU = [
+  { group: "VẬN HÀNH", items: [
+    { id: "dashboard", icon: "▦", label: "Tổng quan" },
+    { id: "conversations", icon: "💬", label: "Hội thoại" },
+    { id: "quotes", icon: "📋", label: "Báo giá" },
+    { id: "products_view", icon: "📦", label: "Sản phẩm" },
+  ]},
+  { group: "QUẢN LÝ", items: [
+    { id: "users", icon: "👤", label: "Người dùng" },
+    { id: "kb_upload", icon: "📁", label: "KB Tài liệu" },
+    { id: "kb_tags", icon: "🏷️", label: "Danh mục & Tag" },
+    { id: "product_import", icon: "📊", label: "Nhập sản phẩm" },
+  ]},
+  { group: "HỆ THỐNG", items: [
+    { id: "prompt_config", icon: "🤖", label: "Cấu hình AI" },
+    { id: "routing_rules", icon: "⚙️", label: "Routing Rules" },
+    { id: "audit_log", icon: "📜", label: "Audit Log" },
+  ]},
+];
 
-// KPI Card
-const KPICard = ({ title, value, subtext, icon: Icon, colorAccent, trend }) => (
-  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 card-hover animate-countUp">
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-      <div>
-        <p style={{ fontSize: 12, color: "#7A7A7A", fontWeight: 500, marginBottom: 4 }}>{title}</p>
-        <p style={{ fontSize: 28, fontWeight: 700, fontFamily: "Lexend", color: "#1C1C1C", lineHeight: 1.2 }}>{value}</p>
-        {subtext && <p style={{ fontSize: 12, color: "#7A7A7A", marginTop: 4 }}>{subtext}</p>}
-        {trend && <p style={{ fontSize: 12, color: "#2E7D32", marginTop: 4, fontWeight: 500 }}>↑ {trend}</p>}
+const Sidebar = ({ active, setActive }) => (
+  <div style={{
+    width: 220, background: T.sidebar, color: "#fff",
+    display: "flex", flexDirection: "column",
+    height: "100vh", position: "sticky", top: 0, flexShrink: 0,
+    fontFamily: "'Inter', 'Segoe UI', sans-serif",
+  }}>
+    {/* Logo */}
+    <div style={{ padding: "20px 18px 16px", borderBottom: `1px solid rgba(255,255,255,.08)` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: 8,
+          background: T.green, display: "flex", alignItems: "center",
+          justifyContent: "center", fontSize: 16
+        }}>🏗️</div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.03em", color: "#fff" }}>REMAK ADMIN</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,.45)", marginTop: 1 }}>Sale Support Chatbot</div>
+        </div>
       </div>
-      <div style={{ width: 44, height: 44, borderRadius: 12, background: `${colorAccent}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Icon size={22} style={{ color: colorAccent }} />
+      <div style={{
+        marginTop: 12, background: "rgba(109,176,43,.18)",
+        borderRadius: 6, padding: "6px 10px",
+        display: "flex", alignItems: "center", gap: 6
+      }}>
+        <div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green }} />
+        <span style={{ fontSize: 10, color: T.greenMid, fontWeight: 600 }}>Hệ thống hoạt động tốt</span>
+      </div>
+    </div>
+
+    {/* Nav */}
+    <div style={{ flex: 1, overflowY: "auto", padding: "10px 0" }}>
+      {MENU.map(g => (
+        <div key={g.group} style={{ marginBottom: 4 }}>
+          <div style={{
+            fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.28)",
+            padding: "10px 18px 4px", letterSpacing: "0.1em"
+          }}>{g.group}</div>
+          {g.items.map(item => {
+            const isAct = active === item.id;
+            return (
+              <div key={item.id}
+                onClick={() => setActive(item.id)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "9px 18px", cursor: "pointer",
+                  background: isAct ? T.sidebarAct : "transparent",
+                  borderLeft: isAct ? `3px solid ${T.green}` : "3px solid transparent",
+                  color: isAct ? "#fff" : "rgba(255,255,255,.55)",
+                  fontSize: 13, fontWeight: isAct ? 600 : 400,
+                  transition: "all .15s",
+                }}
+              >
+                <span style={{ fontSize: 14, width: 18, textAlign: "center" }}>{item.icon}</span>
+                {item.label}
+                {isAct && <div style={{ marginLeft: "auto", width: 5, height: 5, borderRadius: "50%", background: T.green }} />}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+
+    {/* Footer */}
+    <div style={{ borderTop: `1px solid rgba(255,255,255,.08)`, padding: "12px 18px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Avatar name="A" size={28} bg={T.green} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#fff" }}>Truong Nguyen</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,.4)", truncate: true }}>Super Admin</div>
+        </div>
+      </div>
+      <div style={{
+        marginTop: 10, fontSize: 12, color: T.orange,
+        cursor: "pointer", display: "flex", alignItems: "center", gap: 6
+      }}>
+        <span>↪</span> Đăng xuất
       </div>
     </div>
   </div>
 );
 
-// Agent Badge
-const AgentBadge = ({ agentType }) => {
-  const map = {
-    technical: { label: "⚡ Technical", bg: "#E8F5E9", color: "#2E7D32" },
-    pricing: { label: "💰 Pricing", bg: "#FFF8E1", color: "#F57F17" },
-    solution: { label: "🎯 Solution", bg: "#E3F2FD", color: "#1565C0" },
-    order: { label: "📋 Order", bg: "#F3E5F5", color: "#6A1B9A" },
-    chat: { label: "💬 Chat", bg: "#F5F5F5", color: "#4A4A4A" },
-  };
-  const a = map[agentType] || map.chat;
-  return <span style={{ background: a.bg, color: a.color, fontSize: 11, padding: "2px 8px", borderRadius: 999, fontWeight: 600 }}>{a.label}</span>;
-};
-
-// Tech Spec Badge
-const TechSpecBadge = ({ label, value }) => (
-  <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-    <span style={{ fontSize: 10, color: "#7A7A7A", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
-    <span className="font-mono" style={{ fontSize: 12, color: "#4A7C1F", fontWeight: 500 }}>{value}</span>
-  </div>
-);
-
-// Toast
-const Toast = ({ message, type = "success", onClose }) => {
-  useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, []);
-  const colors = { success: "#2E7D32", error: "#C62828", info: "#1565C0" };
-  return (
-    <div className="toast-animate" style={{
-      position: "fixed", top: 20, right: 20, background: "white", border: `1px solid ${colors[type]}20`,
-      borderLeft: `4px solid ${colors[type]}`, borderRadius: 8, padding: "12px 16px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-      zIndex: 9999, display: "flex", alignItems: "center", gap: 8, minWidth: 280,
+// ─── TOPBAR ───────────────────────────────────────────────────────────────────
+const TopBar = ({ title, breadcrumb }) => (
+  <div style={{
+    height: 56, background: T.card, borderBottom: `1px solid ${T.border}`,
+    display: "flex", alignItems: "center", padding: "0 28px",
+    gap: 16, position: "sticky", top: 0, zIndex: 100,
+  }}>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{title}</div>
+      {breadcrumb && <div style={{ fontSize: 11, color: T.textLight }}>{breadcrumb}</div>}
+    </div>
+    <div style={{
+      position: "relative",
+      display: "flex", alignItems: "center", gap: 6,
+      background: T.bg, borderRadius: 8, padding: "6px 12px",
+      border: `1px solid ${T.border}`, minWidth: 240,
     }}>
-      <CheckCircle size={16} style={{ color: colors[type], flexShrink: 0 }} />
-      <span style={{ fontSize: 14, color: "#1C1C1C" }}>{message}</span>
-      <button onClick={onClose} style={{ marginLeft: "auto", color: "#7A7A7A", background: "none", border: "none", cursor: "pointer" }}>
-        <X size={14} />
-      </button>
+      <span style={{ fontSize: 12, color: T.textLight }}>🔍</span>
+      <input placeholder="Tìm kiếm người dùng, sản phẩm, tài liệu..." style={{
+        border: "none", background: "transparent", fontSize: 12,
+        color: T.text, outline: "none", width: "100%"
+      }} />
     </div>
-  );
-};
-
-// Empty State
-const EmptyState = ({ icon: Icon, title, message, actionLabel, onAction }) => (
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", textAlign: "center" }}>
-    <div style={{ width: 64, height: 64, borderRadius: 16, background: "#F4FAE8", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-      <Icon size={28} style={{ color: "#6DB02B" }} />
+    <Btn variant="primary" size="sm">+ Làm mới</Btn>
+    <div style={{ position: "relative", cursor: "pointer" }}>
+      <span style={{ fontSize: 18 }}>🔔</span>
+      <div style={{
+        position: "absolute", top: -3, right: -3,
+        width: 14, height: 14, background: T.orange,
+        borderRadius: "50%", fontSize: 8, color: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700
+      }}>3</div>
     </div>
-    <p style={{ fontSize: 16, fontWeight: 600, fontFamily: "Lexend", color: "#1C1C1C", marginBottom: 8 }}>{title}</p>
-    <p style={{ fontSize: 14, color: "#7A7A7A", marginBottom: 24 }}>{message}</p>
-    {actionLabel && (
-      <button onClick={onAction} style={{ background: "#6DB02B", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-        {actionLabel}
-      </button>
-    )}
+    <Avatar name="A" bg={T.green} />
   </div>
 );
 
-// Confirm Dialog
-const ConfirmDialog = ({ open, title, message, onConfirm, onCancel }) => {
-  if (!open) return null;
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div className="animate-scaleIn" style={{ background: "white", borderRadius: 16, padding: 24, width: 360, boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
-        <h3 style={{ fontFamily: "Lexend", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{title}</h3>
-        <p style={{ fontSize: 14, color: "#4A4A4A", marginBottom: 24 }}>{message}</p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-          <button onClick={onCancel} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #E0E0E0", background: "none", cursor: "pointer", fontSize: 14 }}>Hủy</button>
-          <button onClick={onConfirm} style={{ padding: "8px 16px", borderRadius: 8, background: "#6DB02B", color: "white", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600 }}>Xác nhận</button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// ─── PAGE: LOGIN ──────────────────────────────────────────────────────────────
+const DEMO_ACCOUNTS = [
+  {
+    role: "admin",
+    label: "Admin",
+    name: "Truong Nguyen",
+    email: "admin@remak.vn",
+    password: "Admin@2026",
+    icon: "🛡️",
+    color: "#5B21B6",
+    bg: "#F0EDFF",
+    border: "#C4B5FD",
+    desc: "Toàn quyền hệ thống",
+  },
+  {
+    role: "sales",
+    label: "Sales",
+    name: "Nguyen Trường",
+    email: "sales@remak.vn",
+    password: "Sales@2026",
+    icon: "💼",
+    color: T.blue,
+    bg: T.blueLight,
+    border: "#BFDBFE",
+    desc: "Hội thoại · Báo giá",
+  },
+  {
+    role: "trainer",
+    label: "Trainer",
+    name: "Lê Minh Trainer",
+    email: "trainer@remak.vn",
+    password: "Trainer@2026",
+    icon: "📚",
+    color: T.greenDark,
+    bg: T.greenLight,
+    border: T.greenMid,
+    desc: "KB Manager · Cấu hình AI",
+  },
+  {
+    role: "cs",
+    label: "CS",
+    name: "Phạm CS Agent",
+    email: "cs@remak.vn",
+    password: "CS@2026",
+    icon: "🎧",
+    color: "#9A3412",
+    bg: "#FFF7ED",
+    border: "#FED7AA",
+    desc: "Handoff Queue · CS",
+  },
+];
 
-// Markdown Renderer (simple)
-const MarkdownText = ({ content }) => {
-  const lines = content.split("\n");
-  return (
-    <div style={{ fontSize: 14, lineHeight: 1.6, color: "#1C1C1C" }}>
-      {lines.map((line, i) => {
-        if (!line) return <br key={i} />;
-        const formatted = line
-          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          .replace(/\*(.*?)\*/g, "<em>$1</em>");
-        const isBullet = line.startsWith("•") || line.startsWith("-");
-        return (
-          <p key={i} style={{ marginBottom: 4, paddingLeft: isBullet ? 8 : 0 }}
-            dangerouslySetInnerHTML={{ __html: formatted }} />
-        );
-      })}
-    </div>
-  );
-};
+const LoginPage = ({ onLogin }) => {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [error, setError] = useState("");
+  const [activeDemo, setActiveDemo] = useState(null);
+  const [logging, setLogging] = useState(false);
 
-// ═══════════════════════════════════════════════════════════════════════
-// SIDEBAR COMPONENT
-// ═══════════════════════════════════════════════════════════════════════
-const Sidebar = ({ activeItem, onNavigate, currentUser }) => {
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "conversations", label: "Hội thoại", icon: MessageSquare, badge: 3 },
-    { id: "products", label: "Sản phẩm", icon: Package },
-    { id: "quotes", label: "Báo giá", icon: FileText, badge: 8 },
-    { id: "knowledge", label: "Knowledge Base", icon: BookOpen },
-    { id: "prompts", label: "Prompt Manager", icon: Settings },
-    ...(currentUser?.role === "admin" ? [{ id: "users", label: "Người dùng", icon: Users }] : []),
-  ];
-
-  return (
-    <div style={{ width: 240, background: "#2D5016", height: "100vh", display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0 }}>
-      {/* Logo */}
-      <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-        <div style={{ fontFamily: "Lexend", fontWeight: 700, fontSize: 22, color: "#6DB02B", letterSpacing: "-0.5px" }}>REMAK</div>
-        <div style={{ fontSize: 10, color: "#89C441", marginTop: 2, letterSpacing: "0.1em" }}>SALE SUPPORT AI</div>
-        <div style={{ width: 32, height: 2, background: "#E8380D", borderRadius: 1, marginTop: 4 }} />
-      </div>
-
-      {/* Nav */}
-      <nav style={{ flex: 1, padding: "12px 8px", overflowY: "auto" }}>
-        {navItems.map(item => (
-          <button
-            key={item.id}
-            className="sidebar-item"
-            onClick={() => onNavigate(item.id)}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", gap: 10,
-              padding: "10px 12px", borderRadius: 8, border: "none", cursor: "pointer",
-              background: activeItem === item.id ? "#4A7C1F" : "transparent",
-              color: activeItem === item.id ? "white" : "#C5E09A",
-              borderLeft: activeItem === item.id ? "3px solid #E8380D" : "3px solid transparent",
-              marginBottom: 2, textAlign: "left",
-              transition: "all 0.15s ease",
-            }}>
-            <item.icon size={18} />
-            <span style={{ fontSize: 14, fontWeight: activeItem === item.id ? 600 : 400, flex: 1 }}>{item.label}</span>
-            {item.badge && (
-              <span style={{ background: "#E8380D", color: "white", fontSize: 11, fontWeight: 700, padding: "1px 6px", borderRadius: 999, minWidth: 20, textAlign: "center" }}>{item.badge}</span>
-            )}
-          </button>
-        ))}
-      </nav>
-
-      {/* User */}
-      <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", gap: 10 }}>
-        <UserAvatar user={currentUser} size={34} />
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser?.name}</div>
-          <StatusBadge status={currentUser?.role} />
-        </div>
-        <LogOut size={15} style={{ color: "#89C441", cursor: "pointer" }} />
-      </div>
-    </div>
-  );
-};
-
-// Top Bar
-const TopBar = ({ pageTitle, currentUser, notificationCount = 0, toasts, removeToast }) => (
-  <div style={{ height: 60, background: "white", borderBottom: "1px solid #E0E0E0", display: "flex", alignItems: "center", paddingLeft: 24, paddingRight: 24, gap: 16, flexShrink: 0 }}>
-    <h1 style={{ fontFamily: "Lexend", fontSize: 18, fontWeight: 700, color: "#1C1C1C", flex: 1 }}>{pageTitle}</h1>
-    <div style={{ position: "relative" }}>
-      <button style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #E0E0E0", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Bell size={18} style={{ color: "#4A4A4A" }} />
-      </button>
-      {notificationCount > 0 && (
-        <span style={{ position: "absolute", top: -4, right: -4, background: "#E8380D", color: "white", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{notificationCount}</span>
-      )}
-    </div>
-    <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-      <UserAvatar user={currentUser} size={32} />
-      <span style={{ fontSize: 14, fontWeight: 500 }}>{currentUser?.name}</span>
-      <ChevronDown size={14} style={{ color: "#7A7A7A" }} />
-    </div>
-    {toasts?.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}
-  </div>
-);
-
-// ═══════════════════════════════════════════════════════════════════════
-// SCREEN 1: ADMIN DASHBOARD
-// ═══════════════════════════════════════════════════════════════════════
-const AdminDashboard = ({ addToast }) => {
-  const [dateRange, setDateRange] = useState("7 ngày");
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedConvModal, setSelectedConvModal] = useState(null);
-
-  const donutData = [
-    { name: "AI giải quyết", value: 81.5, color: "#6DB02B" },
-    { name: "Cần nhân viên", value: 18.5, color: "#E8380D" },
-  ];
-
-  const rangeMultipliers = { "Today": 0.3, "7 ngày": 1, "30 ngày": 4.2 };
-  const mult = rangeMultipliers[dateRange] || 1;
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => { setRefreshing(false); addToast("Dữ liệu đã được cập nhật", "success"); }, 1000);
-  };
-
-  return (
-    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Header Row */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <p style={{ fontSize: 13, color: "#7A7A7A" }}>Thứ Bảy, 07/06/2026 · <span style={{ color: "#6DB02B", fontWeight: 600 }}>● {mockDashboard.activeNow} đang online</span></p>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {["Today", "7 ngày", "30 ngày"].map(r => (
-            <button key={r} onClick={() => setDateRange(r)} style={{
-              padding: "6px 14px", borderRadius: 6, border: `1px solid ${dateRange === r ? "#6DB02B" : "#E0E0E0"}`,
-              background: dateRange === r ? "#6DB02B" : "white", color: dateRange === r ? "white" : "#4A4A4A",
-              fontSize: 13, cursor: "pointer", fontWeight: dateRange === r ? 600 : 400,
-            }}>{r}</button>
-          ))}
-          <button onClick={handleRefresh} style={{ width: 34, height: 34, borderRadius: 8, border: "1px solid #E0E0E0", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <RefreshCw size={16} style={{ color: "#4A4A4A", animation: refreshing ? "spin 1s linear infinite" : "none" }} />
-          </button>
-        </div>
-      </div>
-
-      {/* Row 1: KPI Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-        <KPICard title="Hội thoại hôm nay" value={Math.round(mockDashboard.todayConversations * mult)} icon={MessageSquare} colorAccent="#6DB02B" trend="+12% so với hôm qua" />
-        <KPICard title="Tỉ lệ AI giải quyết" value={`${mockDashboard.resolutionByAI}%`} subtext={`${mockDashboard.handoffRate}% cần nhân viên`} icon={Bot || Zap} colorAccent="#1565C0" />
-        <KPICard title="Báo giá chờ xử lý" value={mockDashboard.pendingQuotes} subtext="8 chờ assign" icon={FileText} colorAccent="#E8380D" />
-        <KPICard title="Phản hồi TB" value={`${mockDashboard.avgResponseTimeSec}s`} subtext="Mục tiêu < 3s ✅" icon={Zap} colorAccent="#2E7D32" />
-      </div>
-
-      {/* Row 2: Charts */}
-      <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 16 }}>
-        {/* Line Chart */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm" style={{ padding: 20 }}>
-          <h3 style={{ fontFamily: "Lexend", fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Xu hướng hội thoại 7 ngày</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={mockDashboard.trend.map(d => ({ ...d, count: Math.round(d.count * mult) }))}>
-              <defs>
-                <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6DB02B" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#6DB02B" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#7A7A7A" }} />
-              <YAxis tick={{ fontSize: 11, fill: "#7A7A7A" }} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E0E0E0", fontSize: 13 }} />
-              <Area type="monotone" dataKey="count" stroke="#6DB02B" strokeWidth={2.5} fill="url(#greenGrad)" dot={{ fill: "#6DB02B", r: 3 }} activeDot={{ r: 5 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Donut Chart */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm" style={{ padding: 20 }}>
-          <h3 style={{ fontFamily: "Lexend", fontSize: 15, fontWeight: 600, marginBottom: 8 }}>AI vs Nhân viên</h3>
-          <p style={{ fontSize: 12, color: "#7A7A7A", marginBottom: 8 }}>312 hội thoại / 7 ngày</p>
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie data={donutData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
-                {donutData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-              </Pie>
-              <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12 }} />
-              <Tooltip formatter={(v) => `${v}%`} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Row 3: Tables */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        {/* Top Products */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm" style={{ padding: 20 }}>
-          <h3 style={{ fontFamily: "Lexend", fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Top sản phẩm được hỏi</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {mockDashboard.topProducts.map((p, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 12, color: "#7A7A7A", width: 16, textAlign: "right" }}>{i + 1}</span>
-                <span style={{ fontSize: 13, flex: 1, fontWeight: 500 }}>{p.name}</span>
-                <div style={{ flex: 1, background: "#F4FAE8", borderRadius: 4, height: 6, overflow: "hidden" }}>
-                  <div style={{ height: "100%", background: "#6DB02B", width: `${(p.count / 89) * 100}%`, borderRadius: 4 }} />
-                </div>
-                <span style={{ fontSize: 12, color: "#4A7C1F", fontWeight: 600, width: 28, textAlign: "right" }}>{p.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Top Questions */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm" style={{ padding: 20 }}>
-          <h3 style={{ fontFamily: "Lexend", fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Top câu hỏi phổ biến</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {mockDashboard.topQuestions.map((q, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <span style={{ fontSize: 12, color: "white", background: i < 3 ? "#6DB02B" : "#BDBDBD", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-                <span style={{ fontSize: 13, flex: 1, color: "#4A4A4A", lineHeight: 1.4 }}>{q.name}</span>
-                <span style={{ fontSize: 11, background: "#F4FAE8", color: "#4A7C1F", padding: "2px 8px", borderRadius: 999, fontWeight: 600, flexShrink: 0 }}>{q.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 4: Recent Conversations */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm" style={{ padding: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: "Lexend", fontSize: 15, fontWeight: 600 }}>Hội thoại gần đây</h3>
-          <button style={{ fontSize: 13, color: "#6DB02B", fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}>Xem tất cả →</button>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {mockConversations.map(conv => (
-            <div key={conv.id}
-              onClick={() => setSelectedConvModal(conv)}
-              style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, cursor: "pointer", transition: "background 0.1s" }}
-              onMouseEnter={e => e.currentTarget.style.background = "#F4FAE8"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-              <ChannelIcon channel={conv.channel} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: "#1C1C1C" }}>{conv.visitorName}</span>
-                  {conv.tags.slice(0, 1).map(t => <TagBadge key={t} tag={t} />)}
-                </div>
-                <p style={{ fontSize: 12, color: "#7A7A7A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 300 }}>{conv.lastMessage}</p>
-              </div>
-              <StatusBadge status={conv.status} />
-              <span style={{ fontSize: 11, color: "#7A7A7A", flexShrink: 0 }}>{conv.lastMessageAt}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Conv Preview Modal */}
-      {selectedConvModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 800, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setSelectedConvModal(null)}>
-          <div className="animate-scaleIn" onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: 16, padding: 24, width: 480, boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <ChannelIcon channel={selectedConvModal.channel} size={20} />
-                <h3 style={{ fontFamily: "Lexend", fontSize: 16, fontWeight: 700 }}>{selectedConvModal.visitorName}</h3>
-                <StatusBadge status={selectedConvModal.status} />
-              </div>
-              <button onClick={() => setSelectedConvModal(null)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={18} /></button>
-            </div>
-            <p style={{ fontSize: 13, color: "#4A4A4A", marginBottom: 12 }}><strong>Tin nhắn cuối:</strong> {selectedConvModal.lastMessage}</p>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {selectedConvModal.tags.map(t => <TagBadge key={t} tag={t} />)}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// SCREEN 2: CHAT WIDGET (Customer View)
-// ═══════════════════════════════════════════════════════════════════════
-const ChatWidget = ({ addToast }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([mockMessages[0]]);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [handoffStatus, setHandoffStatus] = useState(null);
-  const [showQuickReplies, setShowQuickReplies] = useState(true);
-  const [expandedCitations, setExpandedCitations] = useState({});
-  const messagesEndRef = useRef(null);
-
-  useEffect(() => {
-    if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isOpen]);
-
-  const getBotResponse = (text) => {
-    const lower = text.toLowerCase();
-    if (lower.includes("mái tôn") || lower.includes("stonewool") || lower.includes("cách nhiệt")) {
-      return mockMessages[2];
-    } else if (lower.includes("phòng thu") || lower.includes("tiêu âm") || lower.includes("nrc")) {
-      return {
-        id: `msg-${Date.now()}`, role: "assistant",
-        content: "Cho phòng thu âm, tôi khuyến nghị **Mút trứng Remak® 30mm**:\n\n• **NRC: 0.85** – Hấp thụ 85% âm thanh phản xạ\n• **STC: 28** – Cách âm tốt giữa các phòng\n• Giá: 45,000 VND/m²\n\nNRC 0.85-0.90 là đủ cho phòng thu âm chuẩn. Nếu cần cách âm cao hơn, có thể kết hợp với tấm thạch cao kép.",
-        timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-        agentUsed: "technical", confidenceScore: 0.89,
-        citations: [{ documentName: "FAQ Kỹ thuật Cách âm", pageRef: "Trang 5", excerpt: "NRC (Noise Reduction Coefficient): Hệ số hấp thụ âm từ 0-1", relevanceScore: 0.87 }],
-        products: [{
-          sku: "ME-30", name: "Mút trứng Remak® 30mm", category: "Tiêu âm",
-          price: 45000, unit: "m²",
-          specs: { NRC: "0.85", STC: "28", thickness: "30mm" }, isRecommended: true,
-        }],
-      };
-    } else if (lower.includes("báo giá") || lower.includes("giá")) {
-      return {
-        id: `msg-${Date.now()}`, role: "assistant",
-        content: "Tôi đã tổng hợp báo giá sơ bộ cho bạn:\n\n• Stonewool 75mm × 500m²: **57,500,000 VND**\n• Mút trứng 30mm × 200m²: **9,000,000 VND**\n\nTổng cộng (chưa VAT): **66,500,000 VND**\n\nBản báo giá đã được tạo. Bạn có thể cho tôi biết tên công ty và thông tin liên hệ để hoàn thiện báo giá không?",
-        timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-        agentUsed: "order", confidenceScore: 0.91,
-      };
-    } else if (lower.includes("nhân viên") || lower.includes("người thật") || lower.includes("tư vấn trực tiếp")) {
-      setTimeout(() => {
-        setHandoffStatus("pending");
-        setTimeout(() => setHandoffStatus("active"), 2000);
-      }, 500);
-      return {
-        id: `msg-${Date.now()}`, role: "assistant",
-        content: "Tôi hiểu bạn muốn nói chuyện trực tiếp với chuyên viên. Đang kết nối bạn với đội Sales ngay bây giờ...",
-        timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-        agentUsed: "chat", confidenceScore: 1.0,
-      };
+  const handleLogin = () => {
+    if (!email || !pass) { setError("Vui lòng nhập email và mật khẩu."); return; }
+    const match = DEMO_ACCOUNTS.find(a => a.email === email && a.password === pass);
+    if (match) {
+      setLogging(true);
+      setTimeout(() => onLogin(match), 700);
+    } else {
+      setError("Email hoặc mật khẩu không đúng.");
+      setActiveDemo(null);
     }
-    return {
-      id: `msg-${Date.now()}`, role: "assistant",
-      content: "Cảm ơn câu hỏi của bạn! Tôi đang tra cứu thông tin từ catalogue sản phẩm Remak. Bạn có thể cho tôi biết thêm về nhu cầu cụ thể – ví dụ loại công trình (nhà xưởng, phòng thu, văn phòng...) và diện tích cần xử lý không?",
-      timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-      agentUsed: "chat", confidenceScore: 0.72,
-    };
   };
 
-  const sendMessage = (text) => {
-    if (!text.trim()) return;
-    const userMsg = { id: `msg-u-${Date.now()}`, role: "user", content: text, timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) };
-    setMessages(prev => [...prev, userMsg]);
-    setInput("");
-    setShowQuickReplies(false);
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const botResp = getBotResponse(text);
-      setMessages(prev => [...prev, botResp]);
-    }, 1500);
+  const fillDemo = (acc) => {
+    setActiveDemo(acc.role);
+    setEmail(acc.email);
+    setPass(acc.password);
+    setError("");
   };
-
-  const ProductCard = ({ product }) => (
-    <div style={{ border: `1px solid ${product.isRecommended ? "#C5E09A" : "#E0E0E0"}`, borderRadius: 10, padding: 12, background: product.isRecommended ? "#FAFFF4" : "white", position: "relative", marginTop: 8 }}>
-      {product.isRecommended && (
-        <span style={{ position: "absolute", top: -8, right: 10, background: "#E8380D", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>⭐ Khuyến nghị</span>
-      )}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-        <div>
-          <span className="font-mono" style={{ fontSize: 10, background: "#F5F5F5", padding: "2px 6px", borderRadius: 4, color: "#7A7A7A" }}>{product.sku}</span>
-          <p style={{ fontSize: 13, fontWeight: 600, marginTop: 3 }}>{product.name}</p>
-        </div>
-        <span style={{ fontSize: 14, fontWeight: 700, color: "#E8380D" }}>{formatVND(product.price)}/{product.unit}</span>
-      </div>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
-        {Object.entries(product.specs).map(([k, v]) => <TechSpecBadge key={k} label={k} value={v} />)}
-      </div>
-      <button
-        onClick={() => addToast(`Đã thêm ${product.name} vào báo giá`, "success")}
-        style={{ width: "100%", background: "#6DB02B", color: "white", border: "none", borderRadius: 6, padding: "6px 0", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-        + Thêm vào báo giá
-      </button>
-    </div>
-  );
 
   return (
-    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 1000 }}>
-      {/* FAB */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          width: 56, height: 56, borderRadius: "50%",
-          background: "linear-gradient(135deg, #6DB02B, #4A7C1F)",
-          border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 4px 12px rgba(77,124,31,0.4)",
-          transition: "transform 0.2s ease, box-shadow 0.2s ease",
-          position: "relative",
-        }}
-        onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(77,124,31,0.5)"; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(77,124,31,0.4)"; }}>
-        <MessageCircle size={24} style={{ color: "white" }} />
-        {!isOpen && <span style={{ position: "absolute", top: 2, right: 2, width: 12, height: 12, background: "#E8380D", borderRadius: "50%", border: "2px solid white" }} />}
-      </button>
+    <div style={{
+      minHeight: "100vh", background: T.sidebar,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "'Inter', 'Segoe UI', sans-serif",
+    }}>
+      {/* BG pattern */}
+      <div style={{
+        position: "fixed", inset: 0, opacity: 0.04,
+        backgroundImage: `repeating-linear-gradient(45deg, ${T.green} 0, ${T.green} 1px, transparent 0, transparent 50%)`,
+        backgroundSize: "24px 24px",
+      }} />
 
-      {/* Chat Panel */}
-      {isOpen && (
-        <div className="animate-scaleIn" style={{
-          position: "absolute", bottom: 68, right: 0,
-          width: 380, height: 600, background: "white",
-          borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-          display: "flex", flexDirection: "column", overflow: "hidden",
-        }}>
-          {/* Header */}
-          <div style={{ background: "#2D5016", padding: "14px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#6DB02B", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Bot size={20} style={{ color: "white" }} />
+      <div style={{ position: "relative", width: "100%", maxWidth: 420, padding: 24 }}>
+        {/* Logo block */}
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 12,
+            background: "rgba(109,176,43,.12)", border: `1px solid rgba(109,176,43,.25)`,
+            borderRadius: 14, padding: "12px 20px",
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: T.green, display: "flex", alignItems: "center",
+              justifyContent: "center", fontSize: 20
+            }}>🏗️</div>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "0.03em" }}>REMAK</div>
+              <div style={{ fontSize: 10, color: T.greenMid }}>Sale Support Admin Portal</div>
             </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: "Lexend", fontWeight: 700, color: "white", fontSize: 14 }}>Trợ lý Remak</p>
-              <p style={{ fontSize: 11, color: "#89C441" }}>● Online – Phản hồi trong vài giây</p>
+          </div>
+          <div style={{ marginTop: 12, fontSize: 13, color: "rgba(255,255,255,.45)" }}>
+            www.tieuam.com
+          </div>
+        </div>
+
+        <Card style={{ padding: 28 }}>
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>Đăng nhập</div>
+            <div style={{ fontSize: 12, color: T.textLight, marginTop: 4 }}>Nhập thông tin tài khoản của bạn</div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: T.textMid, display: "block", marginBottom: 5 }}>
+                Email
+              </label>
+              <Input
+                placeholder="your@remak.vn"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setError(""); setActiveDemo(null); }}
+                icon="✉"
+              />
             </div>
-            <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "white", opacity: 0.7 }}>
-              <X size={18} />
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: T.textMid, display: "block", marginBottom: 5 }}>
+                Mật khẩu
+              </label>
+              <Input
+                placeholder="••••••••"
+                value={pass}
+                onChange={e => { setPass(e.target.value); setError(""); setActiveDemo(null); }}
+                icon="🔒"
+              />
+            </div>
+
+            {error && (
+              <div style={{
+                background: T.redLight, color: T.red,
+                fontSize: 12, padding: "8px 12px", borderRadius: 6,
+                border: `1px solid #FECACA`
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+
+            <button
+              onClick={handleLogin}
+              disabled={logging}
+              style={{
+                width: "100%", border: "none", cursor: logging ? "not-allowed" : "pointer",
+                background: logging ? T.greenDark : T.green, color: "#fff",
+                fontWeight: 700, borderRadius: 7, padding: "11px 16px",
+                fontSize: 14, display: "flex", alignItems: "center",
+                justifyContent: "center", gap: 8, marginTop: 4,
+                transition: "background .2s",
+              }}
+            >
+              {logging ? (
+                <>
+                  <span style={{
+                    width: 14, height: 14, border: "2px solid rgba(255,255,255,.3)",
+                    borderTopColor: "#fff", borderRadius: "50%",
+                    display: "inline-block",
+                    animation: "spin 0.7s linear infinite",
+                  }} />
+                  Đang xác thực...
+                </>
+              ) : "🔑 Đăng nhập"}
             </button>
           </div>
 
-          {/* Handoff Banner */}
-          {handoffStatus && (
-            <div style={{ background: "#FFF5F0", borderLeft: "3px solid #E8380D", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-              <UserCheck size={16} style={{ color: "#E8380D", flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: "#B33000" }}>
-                {handoffStatus === "pending" ? "Đang kết nối với chuyên viên..." : "Chị Lan đã nhận cuộc trò chuyện ✓"}
-              </span>
+          <div style={{ marginTop: 18, borderTop: `1px solid ${T.border}`, paddingTop: 16 }}>
+            <div style={{ fontSize: 11, color: T.textLight, textAlign: "center" }}>
+              JWT Auth · RS256 · Bảo mật bởi HashiCorp Vault
             </div>
-          )}
+          </div>
+        </Card>
 
-          {/* Messages */}
-          <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12, background: "#FAFAFA" }}>
-            {messages.map(msg => (
-              <div key={msg.id} className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", gap: 4 }}>
-                {msg.agentUsed && msg.role === "assistant" && <AgentBadge agentType={msg.agentUsed} />}
-                <div style={{
-                  maxWidth: msg.role === "user" ? "75%" : "85%",
-                  background: msg.role === "user" ? "#4A7C1F" : "white",
-                  color: msg.role === "user" ? "white" : "#1C1C1C",
-                  borderRadius: msg.role === "user" ? "16px 16px 0 16px" : "0 16px 16px 16px",
-                  padding: "10px 14px",
-                  border: msg.role === "assistant" ? "1px solid #E8F4D0" : "none",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                }}>
-                  {msg.role === "assistant" ? <MarkdownText content={msg.content} /> : <p style={{ fontSize: 14 }}>{msg.content}</p>}
-                </div>
+        {/* ── Demo accounts ── */}
+        <div style={{ marginTop: 16 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
+          }}>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,.12)" }} />
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,.35)", letterSpacing: "0.08em", fontWeight: 600, whiteSpace: "nowrap" }}>
+              TÀI KHOẢN DEMO — NHẤP ĐỂ ĐĂNG NHẬP NHANH
+            </span>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,.12)" }} />
+          </div>
 
-                {/* Product Cards */}
-                {msg.products && (
-                  <div style={{ width: "85%", display: "flex", flexDirection: "column", gap: 6 }}>
-                    {msg.products.map(p => <ProductCard key={p.sku} product={p} />)}
-                  </div>
-                )}
-
-                {/* Citations */}
-                {msg.citations?.map((c, i) => (
-                  <div key={i}>
-                    <button
-                      onClick={() => setExpandedCitations(prev => ({ ...prev, [`${msg.id}-${i}`]: !prev[`${msg.id}-${i}`] }))}
-                      style={{ background: "#F4FAE8", border: "1px solid #C5E09A", borderRadius: 999, padding: "3px 10px", fontSize: 11, color: "#4A7C1F", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                      📎 {c.documentName} – {c.pageRef}
-                      <ChevronDown size={10} style={{ transform: expandedCitations[`${msg.id}-${i}`] ? "rotate(180deg)" : "none" }} />
-                    </button>
-                    {expandedCitations[`${msg.id}-${i}`] && (
-                      <div className="animate-fadeIn" style={{ background: "#F4FAE8", border: "1px solid #C5E09A", borderLeft: "3px solid #6DB02B", borderRadius: 6, padding: "8px 10px", marginTop: 4, maxWidth: "85%" }}>
-                        <p className="font-mono" style={{ fontSize: 11, color: "#4A4A4A" }}>{c.excerpt}</p>
-                        <p style={{ fontSize: 10, color: "#7A7A7A", marginTop: 4 }}>Độ liên quan: {(c.relevanceScore * 100).toFixed(0)}%</p>
-                      </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {DEMO_ACCOUNTS.map(acc => {
+              const isActive = activeDemo === acc.role;
+              return (
+                <div
+                  key={acc.role}
+                  onClick={() => fillDemo(acc)}
+                  style={{
+                    cursor: "pointer",
+                    background: isActive ? acc.bg : "rgba(255,255,255,.06)",
+                    border: `1.5px solid ${isActive ? acc.border : "rgba(255,255,255,.12)"}`,
+                    borderRadius: 10, padding: "11px 13px",
+                    transition: "all .18s",
+                    transform: isActive ? "scale(1.02)" : "scale(1)",
+                    boxShadow: isActive ? `0 0 0 3px ${acc.color}30` : "none",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                    <span style={{ fontSize: 18 }}>{acc.icon}</span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 800,
+                      color: isActive ? acc.color : "rgba(255,255,255,.75)",
+                      letterSpacing: "0.05em",
+                    }}>{acc.label}</span>
+                    {isActive && (
+                      <span style={{
+                        marginLeft: "auto", fontSize: 9, fontWeight: 700,
+                        background: acc.color, color: "#fff",
+                        padding: "2px 6px", borderRadius: 4,
+                      }}>✓ Đã chọn</span>
                     )}
                   </div>
-                ))}
-                <span style={{ fontSize: 10, color: "#BDBDBD" }}>{msg.timestamp}</span>
-              </div>
-            ))}
-
-            {/* Quick Replies */}
-            {showQuickReplies && (
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {["Cách nhiệt mái tôn", "Tiêu âm phòng thu", "Báo giá"].map(q => (
-                  <button key={q} onClick={() => sendMessage(q)} style={{ background: "white", border: "1px solid #C5E09A", color: "#4A7C1F", padding: "6px 12px", borderRadius: 999, fontSize: 12, cursor: "pointer", fontWeight: 500 }}>{q}</button>
-                ))}
-              </div>
-            )}
-
-            {/* Typing */}
-            {isTyping && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ background: "white", border: "1px solid #E8F4D0", borderRadius: "0 16px 16px 16px", padding: "10px 14px", display: "flex", gap: 4 }}>
-                  {[0, 1, 2].map(i => (
-                    <div key={i} className={`dot${i + 1}`} style={{ width: 7, height: 7, borderRadius: "50%", background: "#6DB02B" }} />
-                  ))}
+                  <div style={{ fontSize: 10, color: isActive ? acc.color : "rgba(255,255,255,.4)", fontFamily: "monospace", marginBottom: 2 }}>
+                    {acc.email}
+                  </div>
+                  <div style={{ fontSize: 10, color: isActive ? acc.color + "aa" : "rgba(255,255,255,.28)", fontFamily: "monospace", marginBottom: 5 }}>
+                    {acc.password}
+                  </div>
+                  <div style={{ fontSize: 10, color: isActive ? acc.color : "rgba(255,255,255,.3)" }}>
+                    {acc.desc}
+                  </div>
                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+              );
+            })}
           </div>
+        </div>
 
-          {/* Input */}
-          <div style={{ padding: "10px 12px", background: "white", borderTop: "1px solid #E0E0E0", display: "flex", gap: 8, alignItems: "flex-end" }}>
-            <button style={{ background: "none", border: "none", cursor: "pointer", color: "#7A7A7A", padding: 4 }}><Paperclip size={18} /></button>
-            <textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
-              placeholder="Nhập câu hỏi về vật liệu..."
-              rows={1}
-              style={{ flex: 1, border: "1px solid #E0E0E0", borderRadius: 10, padding: "8px 12px", fontSize: 13, resize: "none", outline: "none", fontFamily: "Be Vietnam Pro", maxHeight: 80, overflowY: "auto" }}
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim()}
-              style={{ width: 36, height: 36, borderRadius: "50%", background: input.trim() ? "#6DB02B" : "#E0E0E0", border: "none", cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <ArrowUp size={16} style={{ color: "white" }} />
-            </button>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </div>
+  );
+};
+
+// ─── PAGE: DASHBOARD ──────────────────────────────────────────────────────────
+const Dashboard = () => (
+  <div style={{ padding: 28, display: "flex", flexDirection: "column", gap: 22 }}>
+    <div style={{ display: "flex", gap: 14 }}>
+      <StatCard label="Tổng người dùng" value="7" color={T.green} sub="↑ 2 tuần này" />
+      <StatCard label="Hội thoại hôm nay" value="24" color={T.blue} sub="12 đang active" />
+      <StatCard label="Tài liệu KB" value="18" color={T.text} sub="3 đang xử lý" />
+      <StatCard label="Sản phẩm nhập" value="142" color={T.orange} sub="SKU hoạt động" />
+    </div>
+
+    <div style={{ display: "flex", gap: 16 }}>
+      <Card style={{ flex: 2, padding: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 14 }}>Sprint 0 – Foundation Progress</div>
+        {[
+          { label: "US-S0-001  Login & Auth", pct: 100, status: "done" },
+          { label: "US-S0-002  User CRUD", pct: 100, status: "done" },
+          { label: "US-S0-003  RBAC", pct: 80, status: "inprogress" },
+          { label: "US-S0-004  KB Upload", pct: 60, status: "inprogress" },
+          { label: "US-S0-005  Tag/Category", pct: 40, status: "inprogress" },
+          { label: "US-S0-006  Product Import", pct: 20, status: "todo" },
+        ].map(item => (
+          <div key={item.label} style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+              <span style={{ color: T.textMid }}>{item.label}</span>
+              <span style={{ fontWeight: 700, color: item.pct === 100 ? T.green : T.textMid }}>{item.pct}%</span>
+            </div>
+            <div style={{ height: 6, background: T.bg, borderRadius: 3, overflow: "hidden" }}>
+              <div style={{
+                width: `${item.pct}%`, height: "100%",
+                background: item.pct === 100 ? T.green : item.pct > 50 ? T.yellow : T.border,
+                borderRadius: 3, transition: "width .5s"
+              }} />
+            </div>
           </div>
+        ))}
+      </Card>
+
+      <Card style={{ flex: 1, padding: 20 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 14 }}>Hoạt động gần đây</div>
+        {[
+          { icon: "👤", msg: "Admin tạo user trainer@remak.vn", time: "5 phút trước" },
+          { icon: "📁", msg: "Upload Catalogue Stonewool.pdf", time: "12 phút trước" },
+          { icon: "🏷️", msg: "Thêm category 'Cách nhiệt bảo ôn'", time: "1 giờ trước" },
+          { icon: "📊", msg: "Import 50 SKU từ products.xlsx", time: "2 giờ trước" },
+          { icon: "🔑", msg: "sales1@remak.vn đăng nhập", time: "3 giờ trước" },
+        ].map((a, i) => (
+          <div key={i} style={{
+            display: "flex", gap: 10, alignItems: "flex-start",
+            padding: "8px 0", borderBottom: i < 4 ? `1px solid ${T.border}` : "none"
+          }}>
+            <span style={{ fontSize: 16 }}>{a.icon}</span>
+            <div>
+              <div style={{ fontSize: 12, color: T.text }}>{a.msg}</div>
+              <div style={{ fontSize: 10, color: T.textLight }}>{a.time}</div>
+            </div>
+          </div>
+        ))}
+      </Card>
+    </div>
+  </div>
+);
+
+// ─── PAGE: USER MANAGEMENT ────────────────────────────────────────────────────
+const USERS = [
+  { id: 1, name: "Truong Nguyen", email: "admin@remak.vn",    role: "admin",   status: "active",   joined: "05/05/2026" },
+  { id: 2, name: "Nguyen Trường", email: "nctruong@remak.vn", role: "sales",   status: "active",   joined: "05/05/2026" },
+  { id: 3, name: "Lê Minh Trainer", email: "trainer@remak.vn", role: "trainer", status: "active",  joined: "06/05/2026" },
+  { id: 4, name: "Phạm CS Agent", email: "cs@remak.vn",       role: "cs",      status: "active",   joined: "07/05/2026" },
+  { id: 5, name: "Test User",    email: "test@remak.vn",      role: "sales",   status: "inactive", joined: "08/05/2026" },
+  { id: 6, name: "Trường Nguyên", email: "truong2@remak.vn",  role: "sales",   status: "active",   joined: "08/05/2026" },
+];
+
+const UserManagement = () => {
+  const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [newUser, setNewUser] = useState({ name: "", email: "", role: "sales" });
+  const [users, setUsers] = useState(USERS);
+
+  const filtered = users.filter(u =>
+    u.name.toLowerCase().includes(search.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const createUser = () => {
+    if (newUser.name && newUser.email) {
+      setUsers([...users, { ...newUser, id: Date.now(), status: "active", joined: new Date().toLocaleDateString("vi-VN") }]);
+      setShowModal(false);
+      setNewUser({ name: "", email: "", role: "sales" });
+    }
+  };
+
+  const toggleStatus = (id) => {
+    setUsers(users.map(u => u.id === id ? { ...u, status: u.status === "active" ? "inactive" : "active" } : u));
+  };
+
+  return (
+    <div style={{ padding: 28 }}>
+      {/* Stats row */}
+      <div style={{ display: "flex", gap: 14, marginBottom: 22 }}>
+        <StatCard label="Tổng người dùng" value={users.length} color={T.text} />
+        <StatCard label="Đang hoạt động" value={users.filter(u => u.status === "active").length} color={T.green} />
+        <StatCard label="Bị khóa" value={users.filter(u => u.status === "inactive").length} color={T.orange} />
+        <StatCard label="Admin" value={users.filter(u => u.role === "admin").length} color="#5B21B6" />
+      </div>
+
+      <Card>
+        {/* Toolbar */}
+        <div style={{
+          padding: "16px 20px", borderBottom: `1px solid ${T.border}`,
+          display: "flex", alignItems: "center", gap: 12
+        }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: T.text, flex: 1 }}>Danh sách người dùng</div>
+          <Input
+            placeholder="Tìm theo tên hoặc email..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            icon="🔍"
+            style={{ width: 280 }}
+          />
+          <select style={{
+            border: `1px solid ${T.border}`, borderRadius: 7,
+            padding: "8px 12px", fontSize: 12, color: T.text, background: T.card
+          }}>
+            <option>Tất cả vai trò</option>
+            <option>Admin</option><option>Sales</option>
+            <option>Trainer</option><option>CS</option>
+          </select>
+          <Btn variant="primary" onClick={() => setShowModal(true)}>+ Thêm người dùng</Btn>
+        </div>
+
+        {/* Table */}
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: T.bg }}>
+              {["Người dùng", "Vai trò", "Trạng thái", "Ngày tham gia", "Thao tác"].map(h => (
+                <th key={h} style={{
+                  padding: "10px 20px", textAlign: "left",
+                  fontSize: 11, fontWeight: 700, color: T.textLight,
+                  letterSpacing: "0.06em", textTransform: "uppercase"
+                }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((u, i) => (
+              <tr key={u.id} style={{ borderTop: `1px solid ${T.border}`, background: i % 2 === 0 ? T.card : "rgba(244,246,243,.4)" }}>
+                <td style={{ padding: "12px 20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Avatar name={u.name} size={32} bg={u.role === "admin" ? "#5B21B6" : u.role === "trainer" ? T.green : u.role === "cs" ? "#9A3412" : T.blue} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{u.name}</div>
+                      <div style={{ fontSize: 11, color: T.textLight }}>{u.email}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: "12px 20px" }}><Badge status={u.role} /></td>
+                <td style={{ padding: "12px 20px" }}><Badge status={u.status} /></td>
+                <td style={{ padding: "12px 20px", fontSize: 12, color: T.textMid }}>{u.joined}</td>
+                <td style={{ padding: "12px 20px" }}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <Btn variant="secondary" size="sm">✏️</Btn>
+                    <Btn variant="secondary" size="sm" onClick={() => toggleStatus(u.id)}>
+                      {u.status === "active" ? "🔒" : "✅"}
+                    </Btn>
+                    <Btn variant="ghost" size="sm">↩</Btn>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ padding: "12px 20px", fontSize: 12, color: T.textLight, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>Hiển thị {filtered.length}/{users.length} người dùng</span>
+          <div style={{ display: "flex", gap: 4 }}>
+            {[1, 2, 3].map(p => <Btn key={p} variant={p === 1 ? "primary" : "secondary"} size="sm">{p}</Btn>)}
+          </div>
+        </div>
+      </Card>
+
+      {/* Create Modal */}
+      {showModal && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,.5)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999
+        }}>
+          <Card style={{ width: 420, padding: 28 }}>
+            <div style={{ fontWeight: 800, fontSize: 16, color: T.text, marginBottom: 20 }}>Thêm người dùng mới</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: T.textMid, display: "block", marginBottom: 4 }}>Họ và tên *</label>
+                <Input placeholder="Nguyễn Văn A" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: T.textMid, display: "block", marginBottom: 4 }}>Email *</label>
+                <Input placeholder="user@remak.vn" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: T.textMid, display: "block", marginBottom: 4 }}>Vai trò</label>
+                <select
+                  value={newUser.role}
+                  onChange={e => setNewUser({...newUser, role: e.target.value})}
+                  style={{ width: "100%", border: `1px solid ${T.border}`, borderRadius: 7, padding: "8px 12px", fontSize: 13, color: T.text }}
+                >
+                  <option value="admin">Admin</option>
+                  <option value="sales">Sales</option>
+                  <option value="trainer">Trainer</option>
+                  <option value="cs">CS</option>
+                </select>
+              </div>
+
+              {/* RBAC Preview */}
+              <div style={{ background: T.bg, borderRadius: 7, padding: 12, fontSize: 11, color: T.textMid }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>Quyền truy cập theo vai trò {newUser.role}:</div>
+                {newUser.role === "admin" && <span>Dashboard · User Mgmt · KB Manager · Cấu hình AI · Audit Log · Routing Rules</span>}
+                {newUser.role === "sales" && <span>Dashboard · Hội thoại · Báo giá</span>}
+                {newUser.role === "trainer" && <span>Dashboard · KB Manager · Cấu hình AI · Hội thoại (xem)</span>}
+                {newUser.role === "cs" && <span>Dashboard · Hội thoại (handoff queue)</span>}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 22, justifyContent: "flex-end" }}>
+              <Btn variant="secondary" onClick={() => setShowModal(false)}>Hủy</Btn>
+              <Btn variant="primary" onClick={createUser}>Tạo tài khoản</Btn>
+            </div>
+          </Card>
         </div>
       )}
     </div>
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// SCREEN 3: CONVERSATION MANAGER
-// ═══════════════════════════════════════════════════════════════════════
-const ConversationManager = ({ addToast }) => {
-  const [search, setSearch] = useState("");
-  const [channelFilter, setChannelFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedConv, setSelectedConv] = useState(mockConversations[0]);
-  const [conversations, setConversations] = useState(mockConversations);
-  const [replyText, setReplyText] = useState("");
-  const [confirmResolve, setConfirmResolve] = useState(false);
-  const [feedbacks, setFeedbacks] = useState({});
-  const [tags, setTags] = useState({ "conv-001": ["lead-hot", "interest-stonewool"], "conv-002": ["follow-up", "price-sensitive"], "conv-003": ["lead-warm", "interest-airreflex"], "conv-004": ["lead-warm", "project-studio"] });
-  const [showTagInput, setShowTagInput] = useState(false);
-  const [newTag, setNewTag] = useState("");
+// ─── PAGE: KB UPLOAD ──────────────────────────────────────────────────────────
+const KB_DOCS = [
+  { id: 1, name: "Catalogue_Stonewool_2024.pdf",  type: "PDF",  status: "active",     chunks: 248, size: "12.4 MB", date: "08/06/2026" },
+  { id: 2, name: "Datasheet_AirReflex.pdf",        type: "PDF",  status: "active",     chunks: 86,  size: "3.2 MB",  date: "07/06/2026" },
+  { id: 3, name: "Fire_Rating_Standards.docx",     type: "DOCX", status: "processing", chunks: 0,   size: "2.1 MB",  date: "08/06/2026" },
+  { id: 4, name: "Product_Spec_Table.xlsx",        type: "XLSX", status: "active",     chunks: 124, size: "1.8 MB",  date: "06/06/2026" },
+  { id: 5, name: "https://tieuam.com/stonewool",   type: "URL",  status: "error",      chunks: 0,   size: "—",       date: "05/06/2026" },
+  { id: 6, name: "NRC_Technical_Guide.pdf",        type: "PDF",  status: "processing", chunks: 0,   size: "5.7 MB",  date: "08/06/2026" },
+];
 
-  const filtered = conversations.filter(c => {
-    const matchSearch = c.visitorName.toLowerCase().includes(search.toLowerCase()) || c.lastMessage.toLowerCase().includes(search.toLowerCase());
-    const matchChannel = channelFilter === "all" || c.channel === channelFilter;
-    const matchStatus = statusFilter === "all" || c.status === statusFilter;
-    return matchSearch && matchChannel && matchStatus;
+const KBUpload = () => {
+  const [docs, setDocs] = useState(KB_DOCS);
+  const [filter, setFilter] = useState("all");
+  const [urlInput, setUrlInput] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const deleteDoc = (id) => setDocs(docs.filter(d => d.id !== id));
+
+  const filtered = docs.filter(d => {
+    const matchFilter = filter === "all" || d.status === filter;
+    const matchSearch = d.name.toLowerCase().includes(search.toLowerCase());
+    return matchFilter && matchSearch;
   });
 
-  const handleResolve = () => {
-    setConversations(prev => prev.map(c => c.id === selectedConv.id ? { ...c, status: "resolved" } : c));
-    setSelectedConv(prev => ({ ...prev, status: "resolved" }));
-    addToast("Hội thoại đã được đánh dấu hoàn thành", "success");
-    setConfirmResolve(false);
-  };
-
-  const handleReply = () => {
-    if (!replyText.trim()) return;
-    addToast("Tin nhắn đã gửi thành công", "success");
-    setReplyText("");
-  };
-
-  const addTag = () => {
-    if (!newTag.trim()) return;
-    setTags(prev => ({ ...prev, [selectedConv.id]: [...(prev[selectedConv.id] || []), newTag.trim()] }));
-    setNewTag(""); setShowTagInput(false);
-  };
-
-  const removeTag = (convId, tag) => {
-    setTags(prev => ({ ...prev, [convId]: prev[convId].filter(t => t !== tag) }));
-  };
-
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 60px)", overflow: "hidden" }}>
-      {/* Left: Conv List */}
-      <div style={{ width: 380, borderRight: "1px solid #E0E0E0", display: "flex", flexDirection: "column", background: "white", flexShrink: 0 }}>
-        {/* Filters */}
-        <div style={{ padding: "14px 16px", borderBottom: "1px solid #F0F0F0", display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", gap: 6, alignItems: "center", background: "#F5F5F5", borderRadius: 8, padding: "6px 10px" }}>
-            <Search size={14} style={{ color: "#7A7A7A" }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm kiếm..." style={{ border: "none", background: "none", outline: "none", fontSize: 13, flex: 1 }} />
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {[["all", "Tất cả"], ["web_widget", "Web"], ["zalo_oa", "Zalo"]].map(([v, l]) => (
-              <button key={v} onClick={() => setChannelFilter(v)} style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${channelFilter === v ? "#6DB02B" : "#E0E0E0"}`, background: channelFilter === v ? "#6DB02B" : "white", color: channelFilter === v ? "white" : "#4A4A4A", fontSize: 12, cursor: "pointer" }}>{l}</button>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {[["all", "Tất cả"], ["active", "Active"], ["handoff", "Handoff"], ["resolved", "Resolved"]].map(([v, l]) => (
-              <button key={v} onClick={() => setStatusFilter(v)} style={{ flex: 1, padding: "4px 6px", borderRadius: 6, border: `1px solid ${statusFilter === v ? "#6DB02B" : "#E0E0E0"}`, background: statusFilter === v ? "#6DB02B" : "white", color: statusFilter === v ? "white" : "#4A4A4A", fontSize: 11, cursor: "pointer" }}>{l}</button>
-            ))}
-          </div>
-          <p style={{ fontSize: 11, color: "#7A7A7A" }}>Hiển thị {filtered.length}/{conversations.length}</p>
-        </div>
-
-        {/* List */}
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          {filtered.length === 0 ? <EmptyState icon={MessageSquare} title="Không có hội thoại" message="Thử thay đổi bộ lọc" /> :
-            filtered.map(conv => (
-              <div key={conv.id}
-                onClick={() => setSelectedConv(conv)}
-                style={{
-                  padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid #F5F5F5",
-                  borderLeft: selectedConv?.id === conv.id ? "3px solid #6DB02B" : "3px solid transparent",
-                  background: selectedConv?.id === conv.id ? "#F4FAE8" : "white",
-                  transition: "all 0.1s",
-                }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <ChannelIcon channel={conv.channel} size={14} />
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>{conv.visitorName}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <StatusBadge status={conv.status} />
-                    <span style={{ fontSize: 10, color: "#7A7A7A" }}>{conv.lastMessageAt}</span>
-                  </div>
-                </div>
-                <p style={{ fontSize: 12, color: "#7A7A7A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginBottom: 6 }}>{conv.lastMessage}</p>
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  {(tags[conv.id] || []).slice(0, 2).map(t => <TagBadge key={t} tag={t} />)}
-                  {conv.assignedTo && <UserAvatar user={conv.assignedTo} size={18} />}
-                </div>
-              </div>
-            ))}
-        </div>
+    <div style={{ padding: 28, display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Stats */}
+      <div style={{ display: "flex", gap: 14 }}>
+        <StatCard label="Tổng tài liệu" value={docs.length} color={T.text} />
+        <StatCard label="Đang active" value={docs.filter(d => d.status === "active").length} color={T.green} />
+        <StatCard label="Đang xử lý" value={docs.filter(d => d.status === "processing").length} color={T.yellow} />
+        <StatCard label="Lỗi" value={docs.filter(d => d.status === "error").length} color={T.orange} />
       </div>
 
-      {/* Right: Detail */}
-      {selectedConv ? (
-        <div className="animate-slideIn" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "white" }}>
-          {/* Header */}
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid #E0E0E0", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-            <ChannelIcon channel={selectedConv.channel} size={18} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontFamily: "Lexend", fontSize: 16, fontWeight: 700 }}>{selectedConv.visitorName}</span>
-                {selectedConv.visitorPhone && <span style={{ fontSize: 12, color: "#7A7A7A" }}>{selectedConv.visitorPhone}</span>}
-                <StatusBadge status={selectedConv.status} />
+      <div style={{ display: "flex", gap: 20 }}>
+        {/* Upload zone */}
+        <div style={{ width: 340, flexShrink: 0 }}>
+          <Card style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, fontWeight: 700, fontSize: 14, color: T.text }}>
+              📤 Tải lên tài liệu
+            </div>
+            <div style={{ padding: 20 }}>
+              {/* Drop zone */}
+              <div
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={e => { e.preventDefault(); setDragOver(false); }}
+                style={{
+                  border: `2px dashed ${dragOver ? T.green : T.border}`,
+                  background: dragOver ? T.greenLight : T.bg,
+                  borderRadius: 10, padding: "30px 20px",
+                  textAlign: "center", transition: "all .2s", cursor: "pointer"
+                }}
+              >
+                <div style={{ fontSize: 32, marginBottom: 8 }}>📂</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 4 }}>
+                  Kéo thả file vào đây
+                </div>
+                <div style={{ fontSize: 11, color: T.textLight, marginBottom: 14 }}>
+                  Hỗ trợ: PDF, DOCX, XLSX · Tối đa 50MB
+                </div>
+                <Btn variant="secondary" size="sm">📁 Chọn file từ máy</Btn>
+              </div>
+
+              {/* Format badges */}
+              <div style={{ display: "flex", gap: 6, marginTop: 12, justifyContent: "center" }}>
+                {["PDF", "DOCX", "XLSX"].map(f => (
+                  <span key={f} style={{ fontSize: 10, fontWeight: 700, background: T.greenLight, color: T.greenDark, padding: "3px 8px", borderRadius: 4 }}>{f}</span>
+                ))}
+              </div>
+
+              {/* URL input */}
+              <div style={{ marginTop: 18, borderTop: `1px solid ${T.border}`, paddingTop: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: T.textMid, marginBottom: 8 }}>Hoặc thêm URL:</div>
+                <Input
+                  placeholder="https://tieuam.com/catalogue..."
+                  value={urlInput}
+                  onChange={e => setUrlInput(e.target.value)}
+                  icon="🔗"
+                />
+                <Btn variant="primary" size="sm" style={{ marginTop: 8, width: "100%", justifyContent: "center" }}>
+                  + Thêm URL
+                </Btn>
               </div>
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => setShowTagInput(true)} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #E0E0E0", background: "none", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                <Tag size={12} /> Gắn nhãn
-              </button>
-              {selectedConv.status !== "resolved" && (
-                <button onClick={() => setConfirmResolve(true)} style={{ padding: "6px 12px", borderRadius: 6, background: "#6DB02B", color: "white", border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                  <CheckCircle size={12} /> Đóng
-                </button>
-              )}
-            </div>
-          </div>
+          </Card>
+        </div>
 
-          <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-            {/* Chat history */}
-            <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12, background: "#FAFAFA" }}>
-              {mockMessages.map(msg => (
-                <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", gap: 3 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {msg.agentUsed && <AgentBadge agentType={msg.agentUsed} />}
-                    {msg.confidenceScore && msg.confidenceScore < 0.7 && (
-                      <span style={{ fontSize: 10, color: "#F57F17", background: "#FFF8E1", padding: "1px 6px", borderRadius: 999 }}>⚠ Conf: {msg.confidenceScore}</span>
-                    )}
-                  </div>
-                  <div style={{
-                    maxWidth: "70%", background: msg.role === "user" ? "#4A7C1F" : "white",
-                    color: msg.role === "user" ? "white" : "#1C1C1C",
-                    borderRadius: msg.role === "user" ? "16px 16px 0 16px" : "0 16px 16px 16px",
-                    padding: "10px 14px", border: msg.role === "assistant" ? "1px solid #E8F4D0" : "none",
-                  }}>
-                    {msg.role === "assistant" ? <MarkdownText content={msg.content} /> : <p style={{ fontSize: 13 }}>{msg.content}</p>}
-                  </div>
-                  {msg.citations?.map((c, i) => (
-                    <span key={i} style={{ background: "#F4FAE8", border: "1px solid #C5E09A", borderRadius: 999, padding: "2px 8px", fontSize: 10, color: "#4A7C1F" }}>
-                      📎 {c.documentName}
-                    </span>
-                  ))}
-                  {msg.role === "assistant" && (
-                    <div style={{ display: "flex", gap: 4 }}>
-                      <button onClick={() => setFeedbacks(p => ({ ...p, [msg.id]: "up" }))} style={{ background: feedbacks[msg.id] === "up" ? "#E8F5E9" : "none", border: "none", cursor: "pointer", borderRadius: 4, padding: "2px 6px", color: "#2E7D32" }}>
-                        <ThumbsUp size={12} />
-                      </button>
-                      <button onClick={() => setFeedbacks(p => ({ ...p, [msg.id]: "down" }))} style={{ background: feedbacks[msg.id] === "down" ? "#FFEBEE" : "none", border: "none", cursor: "pointer", borderRadius: 4, padding: "2px 6px", color: "#C62828" }}>
-                        <ThumbsDown size={12} />
-                      </button>
-                    </div>
-                  )}
-                  <span style={{ fontSize: 10, color: "#BDBDBD" }}>{msg.timestamp}</span>
-                </div>
+        {/* Document list */}
+        <Card style={{ flex: 1, overflow: "hidden" }}>
+          {/* Toolbar */}
+          <div style={{ padding: "14px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", gap: 10, alignItems: "center" }}>
+            <div style={{ flex: 1, fontWeight: 700, fontSize: 14, color: T.text }}>Tài liệu đã tải lên</div>
+            <Input placeholder="Tìm tài liệu..." value={search} onChange={e => setSearch(e.target.value)} icon="🔍" style={{ width: 200 }} />
+            <div style={{ display: "flex", gap: 4 }}>
+              {["all", "active", "processing", "error"].map(f => (
+                <Btn key={f} variant={filter === f ? "primary" : "secondary"} size="sm" onClick={() => setFilter(f)}>
+                  {f === "all" ? "Tất cả" : f === "active" ? "Active" : f === "processing" ? "Xử lý" : "Lỗi"}
+                </Btn>
               ))}
             </div>
-
-            {/* Meta Panel */}
-            <div style={{ width: 240, borderLeft: "1px solid #E0E0E0", padding: 16, overflowY: "auto", flexShrink: 0, background: "white" }}>
-              <div style={{ background: "#F5F5F5", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Visitor Info</p>
-                <p style={{ fontSize: 13, fontWeight: 600 }}>{selectedConv.visitorName}</p>
-                {selectedConv.visitorPhone && <p style={{ fontSize: 12, color: "#7A7A7A" }}>{selectedConv.visitorPhone}</p>}
-              </div>
-
-              <div style={{ marginBottom: 12 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Tags</p>
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  {(tags[selectedConv.id] || []).map(t => (
-                    <div key={t} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <TagBadge tag={t} />
-                      <button onClick={() => removeTag(selectedConv.id, t)} style={{ background: "none", border: "none", cursor: "pointer", color: "#7A7A7A", padding: 0, lineHeight: 1 }}><X size={10} /></button>
-                    </div>
-                  ))}
-                  {showTagInput ? (
-                    <input autoFocus value={newTag} onChange={e => setNewTag(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter") addTag(); if (e.key === "Escape") setShowTagInput(false); }}
-                      placeholder="Tag mới..." style={{ border: "1px solid #6DB02B", borderRadius: 6, padding: "2px 6px", fontSize: 11, outline: "none", width: 80 }} />
-                  ) : (
-                    <button onClick={() => setShowTagInput(true)} style={{ fontSize: 11, color: "#6DB02B", background: "#F4FAE8", border: "1px dashed #C5E09A", borderRadius: 999, padding: "2px 8px", cursor: "pointer" }}>+ Thêm</button>
-                  )}
-                </div>
-              </div>
-
-              {selectedConv.quoteId && (
-                <div style={{ background: "#FFF5F0", borderRadius: 8, padding: 10, marginBottom: 12 }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", marginBottom: 4, textTransform: "uppercase" }}>Báo giá liên kết</p>
-                  <span className="font-mono" style={{ fontSize: 13, color: "#E8380D", fontWeight: 600 }}>{selectedConv.quoteId}</span>
-                </div>
-              )}
-
-              {selectedConv.intentsDetected && (
-                <div style={{ marginBottom: 12 }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ý định phát hiện</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {selectedConv.intentsDetected.map(i => (
-                      <span key={i} style={{ fontSize: 11, background: "#E3F2FD", color: "#1565C0", padding: "2px 8px", borderRadius: 4 }}>{i}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Timeline</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {[["Tạo hội thoại", selectedConv.lastMessageAt], ["AI trả lời", "Tự động"], ...(selectedConv.status === "handoff" ? [["Handoff yêu cầu", "12 phút trước"]] : [])].map(([evt, time], i) => (
-                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#6DB02B", marginTop: 5, flexShrink: 0 }} />
-                      <div>
-                        <p style={{ fontSize: 11, fontWeight: 500, color: "#1C1C1C" }}>{evt}</p>
-                        <p style={{ fontSize: 10, color: "#7A7A7A" }}>{time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Handoff Reply Bar */}
-          {selectedConv.status === "handoff" && (
-            <div style={{ background: "#FFF5F0", borderTop: "1px solid #FFBC99", padding: "10px 20px" }}>
-              <p style={{ fontSize: 11, color: "#B33000", fontWeight: 600, marginBottom: 8 }}>🔴 CS Mode – Đang nhận từ AI</p>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input value={replyText} onChange={e => setReplyText(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") handleReply(); }}
-                  placeholder="Nhập phản hồi cho khách hàng..." style={{ flex: 1, border: "1px solid #FFBC99", borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none" }} />
-                <button onClick={handleReply} style={{ background: "#E8380D", color: "white", border: "none", borderRadius: 8, padding: "0 16px", cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Gửi</button>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <EmptyState icon={MessageSquare} title="Chọn hội thoại" message="Chọn một hội thoại từ danh sách bên trái" />
-        </div>
-      )}
-
-      <ConfirmDialog open={confirmResolve} title="Đóng hội thoại?" message="Bạn có chắc muốn đánh dấu hội thoại này là hoàn thành?" onConfirm={handleResolve} onCancel={() => setConfirmResolve(false)} />
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// SCREEN 4: QUOTE MANAGER
-// ═══════════════════════════════════════════════════════════════════════
-const QuoteManager = ({ addToast }) => {
-  const [quotes, setQuotes] = useState(mockQuotes);
-  const [selectedQuote, setSelectedQuote] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editQuote, setEditQuote] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [search, setSearch] = useState("");
-  const [confirmCancel, setConfirmCancel] = useState(false);
-
-  const recalculate = (quote) => {
-    const subtotal = quote.lineItems.reduce((s, i) => s + i.subtotal, 0);
-    const discountAmount = (subtotal * quote.discountPercent) / 100;
-    const taxAmount = ((subtotal - discountAmount) * quote.taxPercent) / 100;
-    const total = subtotal - discountAmount + taxAmount;
-    return { ...quote, subtotal, discountAmount, taxAmount, total };
-  };
-
-  const updateLineItem = (itemId, field, value) => {
-    const updated = { ...editQuote, lineItems: editQuote.lineItems.map(li => {
-      if (li.id !== itemId) return li;
-      const newLi = { ...li, [field]: Number(value) || value };
-      if (field === "quantity" || field === "unitPrice") {
-        newLi.subtotal = (field === "quantity" ? Number(value) : li.quantity) * (field === "unitPrice" ? Number(value) : li.unitPrice);
-      }
-      return newLi;
-    })};
-    setEditQuote(recalculate(updated));
-  };
-
-  const handleSave = () => {
-    setQuotes(prev => prev.map(q => q.id === editQuote.id ? editQuote : q));
-    setSelectedQuote(editQuote);
-    setEditMode(false);
-    addToast("Báo giá đã được lưu", "success");
-  };
-
-  const handleAssign = (user) => {
-    const updated = { ...editQuote || selectedQuote, assignedTo: user, status: "assigned" };
-    setQuotes(prev => prev.map(q => q.id === updated.id ? updated : q));
-    setSelectedQuote(updated);
-    if (editQuote) setEditQuote(updated);
-    addToast(`Đã giao cho ${user.name}`, "success");
-  };
-
-  const addLineItem = () => {
-    const newItem = { id: `li-${Date.now()}`, sku: "", productName: "Sản phẩm mới", quantity: 1, unit: "m²", unitPrice: 0, subtotal: 0, note: "" };
-    setEditQuote(prev => recalculate({ ...prev, lineItems: [...prev.lineItems, newItem] }));
-  };
-
-  const removeLineItem = (id) => {
-    setEditQuote(prev => recalculate({ ...prev, lineItems: prev.lineItems.filter(li => li.id !== id) }));
-  };
-
-  const openEdit = (quote) => {
-    setEditQuote(JSON.parse(JSON.stringify(quote)));
-    setEditMode(true);
-  };
-
-  const filtered = quotes.filter(q => {
-    const ms = statusFilter === "all" || q.status === statusFilter;
-    const ms2 = q.customerInfo.name.toLowerCase().includes(search.toLowerCase()) || q.id.toLowerCase().includes(search.toLowerCase()) || (q.customerInfo.project || "").toLowerCase().includes(search.toLowerCase());
-    return ms && ms2;
-  });
-
-  const displayQuote = editMode ? editQuote : selectedQuote;
-
-  return (
-    <div style={{ display: "flex", height: "calc(100vh - 60px)", overflow: "hidden", background: "#FAFAFA" }}>
-      {/* Table */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", background: "white", borderBottom: "1px solid #E0E0E0", display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
-          <div style={{ display: "flex", gap: 6, alignItems: "center", background: "#F5F5F5", borderRadius: 8, padding: "6px 10px", flex: 1, maxWidth: 280 }}>
-            <Search size={14} style={{ color: "#7A7A7A" }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm báo giá..." style={{ border: "none", background: "none", outline: "none", fontSize: 13, flex: 1 }} />
-          </div>
-          {[["all", "Tất cả"], ["draft", "Nháp"], ["assigned", "Đã giao"], ["sent", "Đã gửi"]].map(([v, l]) => (
-            <button key={v} onClick={() => setStatusFilter(v)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${statusFilter === v ? "#6DB02B" : "#E0E0E0"}`, background: statusFilter === v ? "#6DB02B" : "white", color: statusFilter === v ? "white" : "#4A4A4A", fontSize: 12, cursor: "pointer" }}>{l}</button>
-          ))}
-          <button onClick={() => addToast("Tính năng tạo mới sẽ có trong bản production", "info")} style={{ marginLeft: "auto", background: "#6DB02B", color: "white", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-            <Plus size={14} /> Tạo báo giá
-          </button>
-        </div>
-
-        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ background: "#F4FAE8", borderBottom: "1px solid #E0E0E0" }}>
-                {["Mã BG", "Khách hàng", "Dự án", "Tổng tiền", "Trạng thái", "Giao cho", "Ngày tạo", ""].map(h => (
-                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 12, fontWeight: 600, color: "#4A7C1F", fontFamily: "Lexend" }}>{h}</th>
+              <tr style={{ background: T.bg }}>
+                {["Tên tài liệu", "Loại", "Trạng thái", "Chunks", "Kích thước", "Ngày", ""].map(h => (
+                  <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 10, fontWeight: 700, color: T.textLight, letterSpacing: "0.06em", textTransform: "uppercase" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((q, idx) => (
-                <tr key={q.id}
-                  onClick={() => setSelectedQuote(q)}
-                  style={{ borderBottom: "1px solid #F5F5F5", cursor: "pointer", borderLeft: selectedQuote?.id === q.id ? "3px solid #6DB02B" : "3px solid transparent", background: selectedQuote?.id === q.id ? "#FAFFF4" : "white", transition: "all 0.1s" }}
-                  onMouseEnter={e => { if (selectedQuote?.id !== q.id) e.currentTarget.style.background = "#FAFAFA"; }}
-                  onMouseLeave={e => { if (selectedQuote?.id !== q.id) e.currentTarget.style.background = "white"; }}>
-                  <td style={{ padding: "12px 14px" }}><span className="font-mono" style={{ color: "#4A7C1F", fontWeight: 600, fontSize: 13 }}>{q.id}</span></td>
-                  <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 500 }}>{q.customerInfo.name}</td>
-                  <td style={{ padding: "12px 14px", fontSize: 12, color: "#7A7A7A" }}>{q.customerInfo.project}</td>
-                  <td style={{ padding: "12px 14px" }}><span className="font-mono" style={{ fontSize: 13, fontWeight: 700, color: "#E8380D" }}>{formatVND(q.total)}</span></td>
-                  <td style={{ padding: "12px 14px" }}><StatusBadge status={q.status} /></td>
-                  <td style={{ padding: "12px 14px" }}>
-                    {q.assignedTo ? <div style={{ display: "flex", alignItems: "center", gap: 6 }}><UserAvatar user={q.assignedTo} size={24} /><span style={{ fontSize: 12 }}>{q.assignedTo.name}</span></div> : <span style={{ fontSize: 12, color: "#BDBDBD" }}>—</span>}
+              {filtered.map((doc, i) => (
+                <tr key={doc.id} style={{ borderTop: `1px solid ${T.border}`, background: i % 2 === 0 ? T.card : "rgba(244,246,243,.4)" }}>
+                  <td style={{ padding: "10px 16px" }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: T.text, maxWidth: 220 }}>
+                      {doc.name.length > 30 ? doc.name.substring(0, 30) + "..." : doc.name}
+                    </div>
                   </td>
-                  <td style={{ padding: "12px 14px", fontSize: 12, color: "#7A7A7A" }}>{new Date(q.createdAt).toLocaleDateString("vi-VN")}</td>
-                  <td style={{ padding: "12px 14px" }}>
-                    <button onClick={e => { e.stopPropagation(); openEdit(q); }} style={{ background: "none", border: "1px solid #E0E0E0", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                      <Edit3 size={11} /> Sửa
-                    </button>
+                  <td style={{ padding: "10px 16px" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, background: T.blueLight, color: T.blue, padding: "2px 7px", borderRadius: 4 }}>{doc.type}</span>
+                  </td>
+                  <td style={{ padding: "10px 16px" }}>
+                    <Badge status={doc.status} />
+                    {doc.status === "processing" && (
+                      <div style={{ marginTop: 4, width: 80, height: 4, background: T.border, borderRadius: 2 }}>
+                        <div style={{ width: "45%", height: "100%", background: T.yellow, borderRadius: 2 }} />
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ padding: "10px 16px", fontSize: 12, color: T.textMid, fontWeight: doc.chunks > 0 ? 700 : 400 }}>{doc.chunks || "—"}</td>
+                  <td style={{ padding: "10px 16px", fontSize: 11, color: T.textLight }}>{doc.size}</td>
+                  <td style={{ padding: "10px 16px", fontSize: 11, color: T.textLight }}>{doc.date}</td>
+                  <td style={{ padding: "10px 16px" }}>
+                    <Btn variant="danger" size="sm" onClick={() => deleteDoc(doc.id)}>🗑️</Btn>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 && <EmptyState icon={FileText} title="Không có báo giá" message="Chưa có báo giá nào phù hợp bộ lọc" />}
-        </div>
-      </div>
-
-      {/* Detail Panel */}
-      {displayQuote && (
-        <div className="animate-slideIn" style={{ width: 560, borderLeft: "1px solid #E0E0E0", background: "white", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          {/* Modal Header */}
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid #E0E0E0", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-            <span className="font-mono" style={{ fontSize: 16, fontWeight: 700, color: "#4A7C1F" }}>{displayQuote.id}</span>
-            <StatusBadge status={displayQuote.status} />
-            <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-              {!editMode ? (
-                <>
-                  <button onClick={() => openEdit(displayQuote)} style={{ padding: "6px 12px", border: "1px solid #E0E0E0", borderRadius: 6, background: "none", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                    <Edit3 size={12} /> Chỉnh sửa
-                  </button>
-                  <button onClick={() => setConfirmCancel(true)} style={{ padding: "6px 12px", border: "1px solid #FFCDD2", borderRadius: 6, background: "none", color: "#C62828", fontSize: 12, cursor: "pointer" }}>Hủy BG</button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => setEditMode(false)} style={{ padding: "6px 12px", border: "1px solid #E0E0E0", borderRadius: 6, background: "none", fontSize: 12, cursor: "pointer" }}>Hủy</button>
-                  <button onClick={handleSave} style={{ padding: "6px 12px", background: "#6DB02B", color: "white", border: "none", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Lưu</button>
-                </>
-              )}
-            </div>
+          <div style={{ padding: "10px 16px", fontSize: 11, color: T.textLight }}>
+            Hiển thị {filtered.length}/{docs.length} tài liệu
           </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
 
-          <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* Customer Info */}
-            <div style={{ background: "#F5F5F5", borderRadius: 10, padding: 14 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Thông tin khách hàng</p>
-              {editMode ? (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  {[["name", "Tên công ty"], ["contact", "Người liên hệ"], ["phone", "SĐT"], ["email", "Email"], ["project", "Dự án"]].map(([k, l]) => (
-                    <div key={k} style={{ gridColumn: k === "project" ? "1 / -1" : "auto" }}>
-                      <label style={{ fontSize: 10, color: "#7A7A7A", display: "block", marginBottom: 2 }}>{l}</label>
-                      <input value={editQuote.customerInfo[k] || ""} onChange={e => setEditQuote(p => ({ ...p, customerInfo: { ...p.customerInfo, [k]: e.target.value } }))}
-                        style={{ width: "100%", border: "1px solid #E0E0E0", borderRadius: 6, padding: "5px 8px", fontSize: 12, outline: "none" }} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-                  <div><p style={{ fontSize: 11, color: "#7A7A7A" }}>Công ty</p><p style={{ fontSize: 13, fontWeight: 600 }}>{displayQuote.customerInfo.name}</p></div>
-                  <div><p style={{ fontSize: 11, color: "#7A7A7A" }}>Người LH</p><p style={{ fontSize: 13 }}>{displayQuote.customerInfo.contact}</p></div>
-                  <div><p style={{ fontSize: 11, color: "#7A7A7A" }}>SĐT</p><p style={{ fontSize: 13 }}>{displayQuote.customerInfo.phone}</p></div>
-                  {displayQuote.customerInfo.email && <div><p style={{ fontSize: 11, color: "#7A7A7A" }}>Email</p><p style={{ fontSize: 13 }}>{displayQuote.customerInfo.email}</p></div>}
-                  {displayQuote.customerInfo.project && <div style={{ gridColumn: "1 / -1" }}><p style={{ fontSize: 11, color: "#7A7A7A" }}>Dự án</p><p style={{ fontSize: 13, fontWeight: 500 }}>{displayQuote.customerInfo.project}</p></div>}
-                </div>
-              )}
-            </div>
+// ─── PAGE: KB TAGS ─────────────────────────────────────────────────────────────
+const CATS = [
+  { id: 1, name: "Cách âm tiêu âm", slug: "cach-am-tieu-am", count: 8, color: T.blue },
+  { id: 2, name: "Cách nhiệt bảo ôn", slug: "cach-nhiet-bao-on", count: 6, color: T.green },
+  { id: 3, name: "Chống cháy", slug: "chong-chay", count: 4, color: T.orange },
+  { id: 4, name: "Bảo ôn lạnh", slug: "bao-on-lanh", count: 3, color: "#0891B2" },
+];
+const TAGS = [
+  { name: "NRC Rating", count: 12 }, { name: "STC", count: 8 },
+  { name: "R-value", count: 6 }, { name: "Fire Rating", count: 9 },
+  { name: "Stonewool", count: 15 }, { name: "AirReflex", count: 7 },
+  { name: "Datasheet", count: 18 }, { name: "Technical Spec", count: 11 },
+];
 
-            {/* Line Items */}
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Danh mục sản phẩm</p>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                <thead>
-                  <tr style={{ background: "#F4FAE8" }}>
-                    {["STT", "Sản phẩm", "SKU", "SL", "ĐV", "Đơn giá", "Thành tiền", ...(editMode ? [""] : [])].map(h => (
-                      <th key={h} style={{ padding: "6px 8px", textAlign: "left", fontSize: 10, fontWeight: 600, color: "#4A7C1F" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(editMode ? editQuote : displayQuote).lineItems.map((li, i) => (
-                    <tr key={li.id} style={{ borderBottom: "1px solid #F5F5F5" }}>
-                      <td style={{ padding: "8px" }}>{i + 1}</td>
-                      <td style={{ padding: "8px" }}>{editMode ? <input value={li.productName} onChange={e => updateLineItem(li.id, "productName", e.target.value)} style={{ border: "1px solid #E0E0E0", borderRadius: 4, padding: "3px 6px", fontSize: 11, width: 140, outline: "none" }} /> : li.productName}</td>
-                      <td style={{ padding: "8px" }}><span className="font-mono" style={{ fontSize: 10, background: "#F5F5F5", padding: "2px 4px", borderRadius: 3 }}>{li.sku}</span></td>
-                      <td style={{ padding: "8px" }}>{editMode ? <input type="number" value={li.quantity} onChange={e => updateLineItem(li.id, "quantity", e.target.value)} style={{ border: "1px solid #E0E0E0", borderRadius: 4, padding: "3px 4px", width: 50, fontSize: 11, outline: "none" }} /> : li.quantity}</td>
-                      <td style={{ padding: "8px", color: "#7A7A7A" }}>{li.unit}</td>
-                      <td style={{ padding: "8px" }}>{editMode ? <input type="number" value={li.unitPrice} onChange={e => updateLineItem(li.id, "unitPrice", e.target.value)} style={{ border: "1px solid #E0E0E0", borderRadius: 4, padding: "3px 4px", width: 70, fontSize: 11, outline: "none" }} /> : <span className="font-mono">{li.unitPrice.toLocaleString("vi-VN")}</span>}</td>
-                      <td style={{ padding: "8px" }}><span className="font-mono" style={{ fontWeight: 600, color: "#1C1C1C" }}>{li.subtotal.toLocaleString("vi-VN")}</span></td>
-                      {editMode && <td style={{ padding: "8px" }}><button onClick={() => removeLineItem(li.id)} style={{ color: "#C62828", background: "none", border: "none", cursor: "pointer" }}><Trash2 size={12} /></button></td>}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {editMode && (
-                <button onClick={addLineItem} style={{ width: "100%", marginTop: 8, border: "1px dashed #C5E09A", borderRadius: 6, padding: "6px", fontSize: 12, color: "#6DB02B", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                  <Plus size={12} /> Thêm dòng
-                </button>
-              )}
-            </div>
+const KB_TAG_DOCS = [
+  { name: "Catalogue_Stonewool_2024.pdf", cats: [1, 2], tags: ["Stonewool", "NRC Rating"] },
+  { name: "Datasheet_AirReflex.pdf", cats: [2], tags: ["AirReflex", "R-value"] },
+  { name: "Fire_Rating_Standards.docx", cats: [3], tags: ["Fire Rating"] },
+  { name: "Product_Spec_Table.xlsx", cats: [1, 2, 3, 4], tags: ["Technical Spec", "STC"] },
+];
 
-            {/* Calculation Summary */}
-            <div style={{ background: "#F5F5F5", borderRadius: 10, padding: 14 }}>
-              {[["Tạm tính", displayQuote.subtotal], ["Chiết khấu", -displayQuote.discountAmount], [`VAT (${displayQuote.taxPercent}%)`, displayQuote.taxAmount]].map(([label, val]) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13, color: "#4A4A4A" }}>
-                  <span>{label}</span>
-                  <span className="font-mono">{(val < 0 ? "-" : "") + Math.abs(val).toLocaleString("vi-VN")} đ</span>
+const KBTags = () => {
+  const [cats, setCats] = useState(CATS);
+  const [activeFilter, setActiveFilter] = useState(null);
+  const [newCat, setNewCat] = useState("");
+
+  const addCat = () => {
+    if (newCat.trim()) {
+      setCats([...cats, { id: Date.now(), name: newCat, slug: newCat.toLowerCase().replace(/ /g, "-"), count: 0, color: T.textMid }]);
+      setNewCat("");
+    }
+  };
+
+  return (
+    <div style={{ padding: 28, display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", gap: 20 }}>
+        {/* Categories panel */}
+        <div style={{ width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+          <Card style={{ padding: 20 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 14 }}>📂 Quản lý Danh mục</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {cats.map(cat => (
+                <div key={cat.id}
+                  onClick={() => setActiveFilter(activeFilter === cat.id ? null : cat.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "10px 12px", borderRadius: 8, cursor: "pointer",
+                    background: activeFilter === cat.id ? cat.color + "18" : T.bg,
+                    border: `1px solid ${activeFilter === cat.id ? cat.color : T.border}`,
+                    transition: "all .15s"
+                  }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: T.text }}>{cat.name}</span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700,
+                    background: cat.color + "25", color: cat.color,
+                    padding: "2px 7px", borderRadius: 10
+                  }}>{cat.count}</span>
+                  <Btn variant="ghost" size="sm" onClick={e => { e.stopPropagation(); }}>✏️</Btn>
                 </div>
               ))}
-              {editMode && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
-                  <span style={{ fontSize: 13, color: "#4A4A4A" }}>Chiết khấu (%)</span>
-                  <input type="number" min="0" max="100" value={editQuote.discountPercent}
-                    onChange={e => setEditQuote(p => recalculate({ ...p, discountPercent: Number(e.target.value) }))}
-                    style={{ width: 60, border: "1px solid #E0E0E0", borderRadius: 4, padding: "3px 6px", fontSize: 12, outline: "none", marginLeft: "auto" }} />
-                  <span style={{ fontSize: 12, color: "#7A7A7A" }}>%</span>
-                </div>
-              )}
-              <div style={{ borderTop: "1px solid #E0E0E0", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: "Lexend", fontWeight: 700, fontSize: 15 }}>TỔNG CỘNG</span>
-                <span className="font-mono" style={{ fontSize: 18, fontWeight: 700, color: "#E8380D" }}>{formatVND(displayQuote.total)}</span>
+            </div>
+            <div style={{ marginTop: 14, borderTop: `1px solid ${T.border}`, paddingTop: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: T.textMid, marginBottom: 6 }}>Thêm danh mục mới</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <Input placeholder="Tên danh mục..." value={newCat} onChange={e => setNewCat(e.target.value)} style={{ flex: 1 }} />
+                <Btn variant="primary" size="sm" onClick={addCat}>+</Btn>
               </div>
             </div>
+          </Card>
 
-            {/* Assign Sales */}
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Giao cho Sales</p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {mockUsers.filter(u => u.role === "sales" && u.status === "active").map(u => (
-                  <button key={u.id} onClick={() => handleAssign(u)} style={{
-                    display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8,
-                    border: `1px solid ${displayQuote.assignedTo?.id === u.id ? "#6DB02B" : "#E0E0E0"}`,
-                    background: displayQuote.assignedTo?.id === u.id ? "#F4FAE8" : "white",
-                    cursor: "pointer", fontSize: 12, fontWeight: displayQuote.assignedTo?.id === u.id ? 600 : 400,
+          {/* Tags cloud */}
+          <Card style={{ padding: 20 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 12 }}>🏷️ Tags kỹ thuật</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {TAGS.map(tag => (
+                <span key={tag.name} style={{
+                  fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  background: T.greenLight, color: T.greenDark,
+                  border: `1px solid ${T.greenMid}`,
+                  padding: "3px 10px", borderRadius: 12,
+                  display: "flex", alignItems: "center", gap: 4
+                }}>
+                  {tag.name} <span style={{ opacity: 0.6 }}>({tag.count})</span>
+                </span>
+              ))}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <Input placeholder="Thêm tag mới..." icon="🏷" />
+            </div>
+          </Card>
+        </div>
+
+        {/* Documents with tags */}
+        <Card style={{ flex: 1 }}>
+          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ flex: 1, fontWeight: 700, fontSize: 14, color: T.text }}>
+              Tài liệu & Phân loại
+              {activeFilter && (
+                <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 400, color: T.textLight }}>
+                  — Lọc: {cats.find(c => c.id === activeFilter)?.name}
+                </span>
+              )}
+            </div>
+            {activeFilter && <Btn variant="secondary" size="sm" onClick={() => setActiveFilter(null)}>✕ Bỏ lọc</Btn>}
+          </div>
+
+          <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+            {KB_TAG_DOCS.filter(d => !activeFilter || d.cats.includes(activeFilter)).map((doc, i) => (
+              <div key={i} style={{
+                padding: 14, borderRadius: 8, border: `1px solid ${T.border}`,
+                background: T.bg, display: "flex", alignItems: "flex-start", gap: 12
+              }}>
+                <div style={{ fontSize: 22 }}>📄</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6 }}>{doc.name}</div>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
+                    {doc.cats.map(cid => {
+                      const cat = cats.find(c => c.id === cid);
+                      return cat ? (
+                        <span key={cid} style={{
+                          fontSize: 10, fontWeight: 700,
+                          background: cat.color + "18", color: cat.color,
+                          border: `1px solid ${cat.color}40`,
+                          padding: "2px 8px", borderRadius: 4
+                        }}>{cat.name}</span>
+                      ) : null;
+                    })}
+                  </div>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    {doc.tags.map(t => (
+                      <span key={t} style={{ fontSize: 10, background: T.greenLight, color: T.greenDark, padding: "2px 7px", borderRadius: 10 }}>🏷 {t}</span>
+                    ))}
+                  </div>
+                </div>
+                <Btn variant="secondary" size="sm">+ Gán tag</Btn>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+// ─── PAGE: PRODUCT IMPORT ──────────────────────────────────────────────────────
+const PRODUCTS = [
+  { sku: "RMK-SW-50", name: "Bông đá Stonewool 50mm", cat: "Cách nhiệt bảo ôn", price: "45,000 VND/m²", unit: "m²", nrc: "0.70", stc: "28", status: "active" },
+  { sku: "RMK-AR-20", name: "Túi khí AirReflex 20mm", cat: "Cách nhiệt bảo ôn", price: "28,000 VND/m²", unit: "m²", nrc: "—", stc: "—", status: "active" },
+  { sku: "RMK-MT-30", name: "Mút trứng tiêu âm 30mm", cat: "Cách âm tiêu âm", price: "52,000 VND/m²", unit: "m²", nrc: "0.85", stc: "—", status: "active" },
+  { sku: "RMK-FP-B1", name: "Tấm chống cháy cấp B1", cat: "Chống cháy", price: "120,000 VND/m²", unit: "m²", nrc: "—", stc: "42", status: "active" },
+  { sku: "RMK-GL-100", name: "Bông thủy tinh 100mm", cat: "Bảo ôn lạnh", price: "38,000 VND/m²", unit: "m²", nrc: "0.65", stc: "—", status: "inactive" },
+];
+
+const ProductImport = () => {
+  const [step, setStep] = useState(0); // 0=upload, 1=mapping, 2=done
+  const [products] = useState(PRODUCTS);
+  const [search, setSearch] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [importing, setImporting] = useState(false);
+
+  const startImport = () => {
+    setImporting(true);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += 10;
+      setProgress(p);
+      if (p >= 100) { clearInterval(iv); setStep(2); setImporting(false); }
+    }, 200);
+  };
+
+  const HEADERS = ["Mã SP", "Tên sản phẩm", "Danh mục", "Đơn giá (VND)", "Đơn vị", "NRC", "STC", "Trạng thái"];
+  const FIELDS = ["sku", "name", "category", "price", "unit", "nrc", "stc", "status"];
+  const [mapping, setMapping] = useState({ "Mã SP": "sku", "Tên sản phẩm": "name", "Đơn giá (VND)": "price", "Đơn vị": "unit" });
+
+  const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div style={{ padding: 28, display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Stepper */}
+      <Card style={{ padding: "16px 24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+          {[
+            { num: 1, label: "Tải file lên" },
+            { num: 2, label: "Cấu hình mapping" },
+            { num: 3, label: "Xem trước & Import" },
+            { num: 4, label: "Hoàn tất" },
+          ].map((s, i) => {
+            const done = step > i;
+            const active = step === i;
+            return (
+              <div key={s.num} style={{ display: "flex", alignItems: "center", flex: 1 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flex: 1 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: "50%",
+                    background: done ? T.green : active ? T.green : T.border,
+                    color: done || active ? "#fff" : T.textLight,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 13, fontWeight: 700
+                  }}>{done ? "✓" : s.num}</div>
+                  <span style={{ fontSize: 11, color: active ? T.green : done ? T.greenDark : T.textLight, fontWeight: active ? 700 : 400, textAlign: "center" }}>{s.label}</span>
+                </div>
+                {i < 3 && <div style={{ height: 2, flex: 1, background: done ? T.green : T.border, marginBottom: 20, marginTop: -10 }} />}
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      <div style={{ display: "flex", gap: 20 }}>
+        {/* Upload / Mapping panel */}
+        <div style={{ width: 340, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+          {step === 0 && (
+            <Card style={{ padding: 20 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 14 }}>📥 Upload file sản phẩm</div>
+              <div
+                onClick={() => setStep(1)}
+                style={{
+                  border: `2px dashed ${T.border}`, background: T.bg,
+                  borderRadius: 10, padding: "30px 20px",
+                  textAlign: "center", cursor: "pointer"
+                }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 4 }}>Kéo thả file hoặc nhấn chọn</div>
+                <div style={{ fontSize: 11, color: T.textLight, marginBottom: 14 }}>CSV, XLSX · Tối đa 10MB · UTF-8</div>
+                <Btn variant="primary" size="sm">📁 Chọn file</Btn>
+              </div>
+              <div style={{ marginTop: 14, fontSize: 12, color: T.textMid }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>Cấu hình Mapping đã lưu:</div>
+                {["Remak Standard CSV", "Bảng giá 2024"].map(m => (
+                  <div key={m} style={{
+                    padding: "7px 10px", background: T.bg, borderRadius: 6,
+                    fontSize: 11, color: T.textMid, marginBottom: 4,
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    border: `1px solid ${T.border}`
                   }}>
-                    <UserAvatar user={u} size={22} />
-                    {u.name}
-                    {displayQuote.assignedTo?.id === u.id && <CheckCircle size={12} style={{ color: "#6DB02B" }} />}
-                  </button>
+                    <span>📋 {m}</span>
+                    <Btn variant="ghost" size="sm">Dùng</Btn>
+                  </div>
                 ))}
               </div>
-            </div>
+            </Card>
+          )}
 
-            {/* Notes & Validity */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-              <div>
-                <p style={{ fontSize: 11, color: "#7A7A7A", marginBottom: 4 }}>Ghi chú</p>
-                {editMode ? (
-                  <textarea value={editQuote.notes || ""} onChange={e => setEditQuote(p => ({ ...p, notes: e.target.value }))}
-                    rows={2} style={{ width: "100%", border: "1px solid #E0E0E0", borderRadius: 6, padding: "6px 8px", fontSize: 12, outline: "none", resize: "none" }} />
-                ) : <p style={{ fontSize: 12, color: "#4A4A4A" }}>{displayQuote.notes || "—"}</p>}
+          {step >= 1 && step < 2 && (
+            <Card style={{ padding: 20 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 4 }}>⚙️ Cấu hình Mapping</div>
+              <div style={{ fontSize: 11, color: T.textLight, marginBottom: 14 }}>products_2024.xlsx · 50 dòng</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {HEADERS.slice(0, 5).map(h => (
+                  <div key={h}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: T.textMid, marginBottom: 4 }}>Cột: "{h}"</div>
+                    <select
+                      value={mapping[h] || ""}
+                      onChange={e => setMapping({ ...mapping, [h]: e.target.value })}
+                      style={{ width: "100%", border: `1px solid ${T.border}`, borderRadius: 6, padding: "6px 10px", fontSize: 12 }}
+                    >
+                      <option value="">— Bỏ qua —</option>
+                      {FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                ))}
               </div>
-              <div>
-                <p style={{ fontSize: 11, color: "#7A7A7A", marginBottom: 4 }}>Hiệu lực</p>
-                {editMode ? (
-                  <input type="number" value={editQuote.validityDays} onChange={e => setEditQuote(p => ({ ...p, validityDays: Number(e.target.value) }))}
-                    style={{ width: 60, border: "1px solid #E0E0E0", borderRadius: 6, padding: "6px 8px", fontSize: 12, outline: "none" }} />
-                ) : <p style={{ fontSize: 12, fontWeight: 600, color: "#4A7C1F" }}>{displayQuote.validityDays} ngày</p>}
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <Input placeholder="Lưu config này..." style={{ flex: 1 }} />
+                <Btn variant="secondary" size="sm">💾</Btn>
               </div>
-            </div>
-          </div>
+              <Btn variant="primary" style={{ width: "100%", justifyContent: "center", marginTop: 10 }} onClick={() => { setStep(2); startImport(); }}>
+                ▶ Bắt đầu Import
+              </Btn>
+              {importing && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 11, color: T.textMid, marginBottom: 4 }}>Đang import {Math.round(progress / 2)}/50 sản phẩm...</div>
+                  <div style={{ height: 6, background: T.border, borderRadius: 3 }}>
+                    <div style={{ width: `${progress}%`, height: "100%", background: T.green, borderRadius: 3, transition: "width .2s" }} />
+                  </div>
+                </div>
+              )}
+              {step === 2 && (
+                <div style={{ marginTop: 12, padding: 10, background: T.greenLight, borderRadius: 6, fontSize: 12, color: T.greenDark, fontWeight: 600 }}>
+                  ✅ Import thành công 50/50 sản phẩm
+                </div>
+              )}
+            </Card>
+          )}
         </div>
-      )}
 
-      <ConfirmDialog open={confirmCancel} title="Hủy báo giá?" message="Hành động này không thể hoàn tác. Báo giá sẽ bị đánh dấu là đã hủy."
-        onConfirm={() => { setQuotes(prev => prev.map(q => q.id === selectedQuote.id ? { ...q, status: "cancelled" } : q)); setSelectedQuote(p => ({ ...p, status: "cancelled" })); setConfirmCancel(false); addToast("Đã hủy báo giá", "error"); }}
-        onCancel={() => setConfirmCancel(false)} />
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// SCREEN 5: KB MANAGER
-// ═══════════════════════════════════════════════════════════════════════
-const KBManager = ({ addToast }) => {
-  const [documents, setDocuments] = useState(mockDocuments);
-  const [activeCategory, setActiveCategory] = useState("Tất cả");
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [showChunkExplorer, setShowChunkExplorer] = useState(false);
-  const [chunkSearch, setChunkSearch] = useState("");
-  const [chunks, setChunks] = useState(mockChunks);
-  const [pipelineSteps, setPipelineSteps] = useState({});
-
-  const categories = ["Tất cả", "Cách nhiệt", "Tiêu âm", "Cách âm", "Chống cháy", "Bảng giá"];
-
-  const filtered = documents.filter(d => activeCategory === "Tất cả" || d.category === activeCategory);
-  const filteredChunks = chunks.filter(c => c.content.toLowerCase().includes(chunkSearch.toLowerCase()) || c.docName.toLowerCase().includes(chunkSearch.toLowerCase()));
-
-  const simulateUpload = () => {
-    const newDoc = {
-      id: `doc-${Date.now()}`, fileName: `Catalogue_Moi_${Date.now().toString().slice(-4)}.pdf`,
-      fileType: "pdf", fileSize: 3145728, category: "Cách nhiệt",
-      tags: ["Mới"], status: "uploading", version: 1, uploadedBy: "Trần Hùng", uploadedAt: new Date().toISOString(),
-    };
-    setDocuments(prev => [newDoc, ...prev]);
-    setDocuments(prev => prev.map(d => d.id === newDoc.id ? { ...d, status: "uploading" } : d));
-
-    setTimeout(() => {
-      setDocuments(prev => prev.map(d => d.id === newDoc.id ? { ...d, status: "processing" } : d));
-      setPipelineSteps(p => ({ ...p, [newDoc.id]: 0 }));
-
-      let step = 0;
-      const interval = setInterval(() => {
-        step++;
-        setPipelineSteps(p => ({ ...p, [newDoc.id]: step }));
-        if (step >= 4) {
-          clearInterval(interval);
-          setDocuments(prev => prev.map(d => d.id === newDoc.id ? { ...d, status: "active", chunkCount: 47 } : d));
-          setPipelineSteps(p => { const np = { ...p }; delete np[newDoc.id]; return np; });
-          addToast("Tài liệu đã được xử lý thành công (47 chunks)", "success");
-        }
-      }, 1000);
-    }, 2000);
-
-    addToast("Đang tải tài liệu lên...", "info");
-  };
-
-  const getFileIcon = (type) => {
-    const icons = { pdf: "📄", excel: "📊", docx: "📝", url: "🔗" };
-    return icons[type] || "📁";
-  };
-
-  const PipelineIndicator = ({ docId }) => {
-    const step = pipelineSteps[docId] || 0;
-    const steps = ["Parse", "Chunk", "Embed", "Index"];
-    return (
-      <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10 }}>
-        {steps.map((s, i) => (
-          <div key={s} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <div style={{ width: 16, height: 16, borderRadius: "50%", background: i < step ? "#6DB02B" : i === step ? "#F9A825" : "#E0E0E0", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.3s" }}>
-              {i < step && <span style={{ color: "white", fontSize: 8 }}>✓</span>}
-              {i === step && <span style={{ color: "white", fontSize: 7, animation: "pulse 1s infinite" }}>●</span>}
-            </div>
-            <span style={{ color: i <= step ? "#4A7C1F" : "#BDBDBD", fontWeight: i <= step ? 600 : 400 }}>{s}</span>
-            {i < 3 && <span style={{ color: "#BDBDBD" }}>─</span>}
+        {/* Products table */}
+        <Card style={{ flex: 1, overflow: "hidden" }}>
+          <div style={{ padding: "14px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", gap: 10, alignItems: "center" }}>
+            <div style={{ flex: 1, fontWeight: 700, fontSize: 14, color: T.text }}>📦 Danh sách sản phẩm ({products.length} SKU)</div>
+            <Input placeholder="Tìm SKU, tên sản phẩm..." value={search} onChange={e => setSearch(e.target.value)} icon="🔍" style={{ width: 220 }} />
+            <Btn variant="primary" size="sm">+ Thêm SKU</Btn>
           </div>
-        ))}
-      </div>
-    );
-  };
 
-  return (
-    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Upload Zone */}
-      <div
-        onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
-        onDragLeave={() => setIsDragOver(false)}
-        onDrop={e => { e.preventDefault(); setIsDragOver(false); simulateUpload(); }}
-        onClick={simulateUpload}
-        style={{
-          border: `2px ${isDragOver ? "solid" : "dashed"} ${isDragOver ? "#6DB02B" : "#C5E09A"}`,
-          borderRadius: 12, padding: "28px 20px", textAlign: "center",
-          background: isDragOver ? "#E8F4D0" : "#F4FAE8",
-          cursor: "pointer", transition: "all 0.2s",
-        }}>
-        <Upload size={32} style={{ color: "#6DB02B", marginBottom: 8 }} />
-        <p style={{ fontFamily: "Lexend", fontSize: 15, fontWeight: 600, color: "#2D5016" }}>Kéo thả file hoặc click để chọn</p>
-        <p style={{ fontSize: 12, color: "#7A7A7A", marginTop: 4 }}>PDF, DOCX, Excel, URL – Tối đa 50MB</p>
-      </div>
+          {/* Preview header (step 1) */}
+          {step === 1 && (
+            <div style={{ padding: "8px 20px", background: T.yellowLight, borderBottom: `1px solid ${T.border}`, fontSize: 11, color: "#92400E" }}>
+              👁 Preview 10 dòng đầu · Mapping: {Object.keys(mapping).filter(k => mapping[k]).length} cột được ánh xạ
+            </div>
+          )}
 
-      {/* Category Filter */}
-      <div style={{ display: "flex", gap: 8 }}>
-        {categories.map(cat => (
-          <button key={cat} onClick={() => setActiveCategory(cat)} style={{
-            padding: "6px 14px", borderRadius: 999, border: `1px solid ${activeCategory === cat ? "#6DB02B" : "#E0E0E0"}`,
-            background: activeCategory === cat ? "#6DB02B" : "white", color: activeCategory === cat ? "white" : "#4A4A4A",
-            fontSize: 12, cursor: "pointer", fontWeight: activeCategory === cat ? 600 : 400,
-          }}>{cat}</button>
-        ))}
-        <button onClick={() => setShowChunkExplorer(!showChunkExplorer)} style={{
-          marginLeft: "auto", padding: "6px 14px", borderRadius: 6, border: `1px solid ${showChunkExplorer ? "#6DB02B" : "#E0E0E0"}`,
-          background: showChunkExplorer ? "#F4FAE8" : "white", color: showChunkExplorer ? "#4A7C1F" : "#4A4A4A", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-        }}>
-          <Layers size={12} /> Chunk Explorer
-        </button>
-      </div>
-
-      {/* Document Table */}
-      <div style={{ background: "white", borderRadius: 12, border: "1px solid #E0E0E0", overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#F4FAE8", borderBottom: "1px solid #E0E0E0" }}>
-              {["File", "Loại", "Danh mục", "Tags", "Trạng thái", "Chunks", "Upload bởi", "Ngày", "Actions"].map(h => (
-                <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#4A7C1F", fontFamily: "Lexend" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(doc => (
-              <tr key={doc.id} style={{ borderBottom: "1px solid #F5F5F5" }}>
-                <td style={{ padding: "12px 14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 18 }}>{getFileIcon(doc.fileType)}</span>
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 500 }}>{doc.fileName}</p>
-                      <p style={{ fontSize: 11, color: "#7A7A7A" }}>{formatBytes(doc.fileSize)}</p>
-                    </div>
-                  </div>
-                </td>
-                <td style={{ padding: "12px 14px" }}><span className="font-mono" style={{ fontSize: 11, background: "#F5F5F5", padding: "2px 6px", borderRadius: 4 }}>{doc.fileType.toUpperCase()}</span></td>
-                <td style={{ padding: "12px 14px", fontSize: 12 }}>{doc.category}</td>
-                <td style={{ padding: "12px 14px" }}><div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{doc.tags.map(t => <span key={t} style={{ fontSize: 10, background: "#E8F4D0", color: "#4A7C1F", padding: "1px 6px", borderRadius: 999 }}>{t}</span>)}</div></td>
-                <td style={{ padding: "12px 14px" }}>
-                  {doc.status === "processing" && pipelineSteps[doc.id] !== undefined ? (
-                    <PipelineIndicator docId={doc.id} />
-                  ) : (
-                    <div style={{ position: "relative" }}>
-                      <StatusBadge status={doc.status} />
-                      {doc.status === "error" && (
-                        <div style={{ position: "absolute", left: 0, top: "100%", zIndex: 10, background: "white", border: "1px solid #FFCDD2", borderRadius: 6, padding: "6px 10px", fontSize: 11, color: "#C62828", width: 200, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 2 }}>
-                          {doc.errorMessage}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {doc.status === "uploading" && (
-                    <div style={{ width: 80, height: 4, background: "#E0E0E0", borderRadius: 999, marginTop: 4, overflow: "hidden" }}>
-                      <div style={{ height: "100%", background: "#6DB02B", borderRadius: 999 }} className="progress-animate" />
-                    </div>
-                  )}
-                </td>
-                <td style={{ padding: "12px 14px" }}>
-                  {doc.chunkCount ? <span className="font-mono" style={{ fontSize: 12, color: "#4A7C1F", fontWeight: 600 }}>{doc.chunkCount}</span> : <span style={{ color: "#BDBDBD", fontSize: 12 }}>—</span>}
-                </td>
-                <td style={{ padding: "12px 14px", fontSize: 12 }}>{doc.uploadedBy}</td>
-                <td style={{ padding: "12px 14px", fontSize: 11, color: "#7A7A7A" }}>{new Date(doc.uploadedAt).toLocaleDateString("vi-VN")}</td>
-                <td style={{ padding: "12px 14px" }}>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <button onClick={() => addToast("Đã lưu trữ tài liệu", "success")} style={{ padding: "3px 8px", borderRadius: 4, border: "1px solid #E0E0E0", background: "none", fontSize: 10, cursor: "pointer" }}>Archive</button>
-                    <button onClick={() => setDocuments(prev => prev.filter(d => d.id !== doc.id))} style={{ padding: "3px 8px", borderRadius: 4, border: "1px solid #FFCDD2", background: "none", color: "#C62828", fontSize: 10, cursor: "pointer" }}>Xóa</button>
-                  </div>
-                </td>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: T.bg }}>
+                {["SKU", "Tên sản phẩm", "Danh mục", "Giá niêm yết", "NRC", "STC", "Trạng thái", ""].map(h => (
+                  <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 10, fontWeight: 700, color: T.textLight, letterSpacing: "0.06em", textTransform: "uppercase" }}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && <EmptyState icon={BookOpen} title="Chưa có tài liệu" message="Kéo thả file vào vùng upload bên trên" />}
-      </div>
-
-      {/* Chunk Explorer */}
-      {showChunkExplorer && (
-        <div className="animate-fadeIn" style={{ background: "white", borderRadius: 12, border: "1px solid #E0E0E0", padding: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <h3 style={{ fontFamily: "Lexend", fontSize: 15, fontWeight: 600 }}>Chunk Explorer</h3>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", background: "#F5F5F5", borderRadius: 8, padding: "6px 10px" }}>
-              <Search size={14} style={{ color: "#7A7A7A" }} />
-              <input value={chunkSearch} onChange={e => setChunkSearch(e.target.value)} placeholder="Tìm trong nội dung chunks..." style={{ border: "none", background: "none", outline: "none", fontSize: 12, width: 220 }} />
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {filteredChunks.map(chunk => (
-              <div key={chunk.id} style={{
-                padding: "12px 14px", borderRadius: 8,
-                borderLeft: `3px solid ${chunk.relevant === true ? "#6DB02B" : chunk.relevant === false ? "#C62828" : "#E0E0E0"}`,
-                background: chunk.relevant === true ? "#F4FAE8" : chunk.relevant === false ? "#FFEBEE" : "#F5F5F5",
-                display: "flex", alignItems: "flex-start", gap: 10,
-              }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                    <span className="font-mono" style={{ fontSize: 10, background: "white", border: "1px solid #E0E0E0", padding: "1px 6px", borderRadius: 4 }}>{chunk.id}</span>
-                    <span style={{ fontSize: 11, color: "#7A7A7A" }}>{chunk.docName}</span>
-                    <span className="font-mono" style={{ fontSize: 10, color: "#4A7C1F", marginLeft: "auto" }}>Score: {chunk.score}</span>
-                  </div>
-                  <p style={{ fontSize: 12, color: "#4A4A4A", lineHeight: 1.5 }}>{chunk.content}</p>
-                </div>
-                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                  <button onClick={() => setChunks(prev => prev.map(c => c.id === chunk.id ? { ...c, relevant: true } : c))} style={{ padding: "4px 8px", borderRadius: 6, border: "none", background: chunk.relevant === true ? "#6DB02B" : "#E0E0E0", color: chunk.relevant === true ? "white" : "#4A4A4A", cursor: "pointer" }}>
-                    <ThumbsUp size={12} />
-                  </button>
-                  <button onClick={() => setChunks(prev => prev.map(c => c.id === chunk.id ? { ...c, relevant: false } : c))} style={{ padding: "4px 8px", borderRadius: 6, border: "none", background: chunk.relevant === false ? "#C62828" : "#E0E0E0", color: chunk.relevant === false ? "white" : "#4A4A4A", cursor: "pointer" }}>
-                    <ThumbsDown size={12} />
-                  </button>
-                </div>
-              </div>
-            ))}
-            {filteredChunks.length === 0 && <p style={{ textAlign: "center", color: "#7A7A7A", fontSize: 13, padding: 20 }}>Không tìm thấy chunk phù hợp</p>}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// SCREEN 6: PROMPT MANAGER
-// ═══════════════════════════════════════════════════════════════════════
-const PromptManager = ({ addToast }) => {
-  const [selectedPrompt, setSelectedPrompt] = useState(mockPrompts[0]);
-  const [activeTab, setActiveTab] = useState("editor");
-  const [editContent, setEditContent] = useState(mockPrompts[0].content);
-  const [testInput, setTestInput] = useState("");
-  const [testOutput, setTestOutput] = useState(null);
-  const [isTesting, setIsTesting] = useState(false);
-  const [diffVersionA, setDiffVersionA] = useState(2);
-  const [diffVersionB, setDiffVersionB] = useState(3);
-
-  const handleSelectPrompt = (p) => {
-    setSelectedPrompt(p);
-    setEditContent(p.content);
-    setTestOutput(null);
-    setActiveTab("editor");
-  };
-
-  const handleRunTest = () => {
-    if (!testInput.trim()) return;
-    setIsTesting(true);
-    setTestOutput(null);
-    setTimeout(() => {
-      setIsTesting(false);
-      setTestOutput({
-        content: `Dựa trên câu hỏi của bạn về "${testInput}", tôi tra cứu từ Knowledge Base của Remak và tìm thấy thông tin sau:\n\n**Remak® Stonewool 75mm** là giải pháp phù hợp nhất với:\n- R-value: 1.87 m²K/W\n- Fire Rating: A1 (EN 13501-1)\n- Phù hợp cho nhà xưởng, kho hàng có yêu cầu cách nhiệt cao\n\n*Nguồn: Catalogue Stonewool 2024, Trang 12*`,
-        latency: "1.24s", tokens: 312, agent: "Technical Agent",
-      });
-    }, 1500);
-  };
-
-  const promptTypeLabels = { system_prompt: "System", technical_prompt: "Technical", pricing_prompt: "Pricing", handoff_prompt: "Handoff", greeting_prompt: "Greeting" };
-  const versions = promptVersions[selectedPrompt.id] || [{ version: selectedPrompt.version, date: selectedPrompt.lastModified, content: selectedPrompt.content }];
-
-  const renderDiff = (v1, v2) => {
-    const lines1 = v1.content.split("\n");
-    const lines2 = v2.content.split("\n");
-    const maxLen = Math.max(lines1.length, lines2.length);
-    return Array.from({ length: maxLen }, (_, i) => ({
-      left: lines1[i] || "", right: lines2[i] || "",
-      changed: lines1[i] !== lines2[i],
-    }));
-  };
-
-  const vA = versions.find(v => v.version === diffVersionA) || versions[0];
-  const vB = versions.find(v => v.version === diffVersionB) || versions[versions.length - 1];
-  const diffLines = renderDiff(vA, vB);
-
-  return (
-    <div style={{ display: "flex", height: "calc(100vh - 60px)", overflow: "hidden", background: "#FAFAFA" }}>
-      {/* Left: Prompt List */}
-      <div style={{ width: 280, background: "white", borderRight: "1px solid #E0E0E0", display: "flex", flexDirection: "column", flexShrink: 0 }}>
-        <div style={{ padding: "14px 16px", borderBottom: "1px solid #F0F0F0" }}>
-          <h3 style={{ fontFamily: "Lexend", fontSize: 14, fontWeight: 700, color: "#2D5016" }}>Prompt Store</h3>
-          <p style={{ fontSize: 11, color: "#7A7A7A", marginTop: 2 }}>{mockPrompts.length} prompts</p>
-        </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
-          {mockPrompts.map(p => (
-            <button key={p.id} onClick={() => handleSelectPrompt(p)} style={{
-              width: "100%", textAlign: "left", padding: "10px 12px", borderRadius: 8, border: "none", cursor: "pointer",
-              background: selectedPrompt.id === p.id ? "#F4FAE8" : "transparent",
-              borderLeft: selectedPrompt.id === p.id ? "3px solid #6DB02B" : "3px solid transparent",
-              marginBottom: 2,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <p style={{ fontSize: 13, fontWeight: selectedPrompt.id === p.id ? 600 : 400, color: selectedPrompt.id === p.id ? "#2D5016" : "#1C1C1C" }}>{p.name}</p>
-                <span style={{ fontSize: 10, background: "#F5F5F5", color: "#7A7A7A", padding: "1px 5px", borderRadius: 4, fontFamily: "JetBrains Mono" }}>v{p.version}</span>
-              </div>
-              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                <span style={{ fontSize: 10, background: "#E8F4D0", color: "#4A7C1F", padding: "1px 6px", borderRadius: 999 }}>{promptTypeLabels[p.type]}</span>
-                <span style={{ fontSize: 10, color: "#BDBDBD" }}>· {p.lastModified}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Right: Editor */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        {/* Tabs */}
-        <div style={{ background: "white", borderBottom: "1px solid #E0E0E0", padding: "0 20px", display: "flex", gap: 0, flexShrink: 0 }}>
-          {[["editor", "Editor"], ["playground", "Playground"], ["history", "Version History"], ["diff", "Diff Viewer"]].map(([id, label]) => (
-            <button key={id} onClick={() => setActiveTab(id)} style={{
-              padding: "12px 16px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: activeTab === id ? 600 : 400,
-              color: activeTab === id ? "#4A7C1F" : "#7A7A7A",
-              borderBottom: activeTab === id ? "2px solid #6DB02B" : "2px solid transparent",
-              display: "flex", alignItems: "center", gap: 4,
-            }}>
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
-          {/* EDITOR TAB */}
-          {activeTab === "editor" && (
-            <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", display: "block", marginBottom: 4, textTransform: "uppercase" }}>Tên Prompt</label>
-                  <input defaultValue={selectedPrompt.name} style={{ width: "100%", border: "1px solid #E0E0E0", borderRadius: 8, padding: "8px 12px", fontSize: 14, outline: "none", fontFamily: "Lexend", fontWeight: 500 }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", display: "block", marginBottom: 4, textTransform: "uppercase" }}>Loại</label>
-                  <select defaultValue={selectedPrompt.type} style={{ border: "1px solid #E0E0E0", borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none", background: "white" }}>
-                    {Object.entries(promptTypeLabels).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ background: "#F5F5F5", borderRadius: 8, padding: "6px 12px", fontSize: 11, color: "#4A7C1F" }}>
-                <strong>Variables:</strong> {"{{"}<span className="font-mono">customer_name</span>{"}}"}, {"{{"}<span className="font-mono">product_list</span>{"}}"}, {"{{"}<span className="font-mono">use_case</span>{"}}"}, {"{{"}<span className="font-mono">handoff_reason</span>{"}}"}
-              </div>
-
-              <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "#7A7A7A", display: "block", marginBottom: 4, textTransform: "uppercase" }}>Nội dung Prompt</label>
-                <textarea
-                  value={editContent}
-                  onChange={e => setEditContent(e.target.value)}
-                  rows={16}
-                  className="font-mono"
-                  style={{
-                    width: "100%", border: "1px solid #E0E0E0", borderRadius: 8, padding: "12px 14px",
-                    fontSize: 13, outline: "none", resize: "vertical", lineHeight: 1.6,
-                    background: "#FAFFFE",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <button style={{ padding: "8px 16px", border: "1px solid #E0E0E0", borderRadius: 8, background: "none", fontSize: 13, cursor: "pointer" }}>Lưu nháp</button>
-                <button onClick={() => addToast(`Prompt "${selectedPrompt.name}" đã được publish (v${selectedPrompt.version + 1})`, "success")} style={{ padding: "8px 20px", background: "#6DB02B", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                  🚀 Publish v{selectedPrompt.version + 1}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* PLAYGROUND TAB */}
-          {activeTab === "playground" && (
-            <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ background: "#F5F5F5", borderRadius: 10, padding: 14 }}>
-                <p style={{ fontSize: 12, color: "#7A7A7A", marginBottom: 6 }}>Đang test: <strong style={{ color: "#2D5016" }}>{selectedPrompt.name}</strong></p>
-                <textarea
-                  value={testInput}
-                  onChange={e => setTestInput(e.target.value)}
-                  placeholder="Nhập câu hỏi test, ví dụ: 'Stonewool 50mm hay 75mm phù hợp hơn cho mái tôn nhà xưởng?'"
-                  rows={4}
-                  style={{ width: "100%", border: "1px solid #E0E0E0", borderRadius: 8, padding: "10px 12px", fontSize: 13, outline: "none", resize: "none" }}
-                />
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                  <button onClick={handleRunTest} disabled={!testInput.trim()} style={{
-                    padding: "8px 20px", background: testInput.trim() ? "#6DB02B" : "#E0E0E0", color: "white",
-                    border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: testInput.trim() ? "pointer" : "default",
-                    display: "flex", alignItems: "center", gap: 6,
-                  }}>
-                    <Play size={14} /> Chạy test
-                  </button>
-                </div>
-              </div>
-
-              {isTesting && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 14 }}>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {[0, 1, 2].map(i => <div key={i} className={`dot${i + 1}`} style={{ width: 8, height: 8, borderRadius: "50%", background: "#6DB02B" }} />)}
-                  </div>
-                  <span style={{ fontSize: 13, color: "#7A7A7A" }}>AI đang xử lý...</span>
-                </div>
-              )}
-
-              {testOutput && (
-                <div className="animate-fadeIn" style={{ background: "white", border: "1px solid #E8F4D0", borderRadius: 12, padding: 16, borderLeft: "3px solid #6DB02B" }}>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                    <span style={{ fontSize: 11, background: "#E8F4D0", color: "#4A7C1F", padding: "2px 8px", borderRadius: 999, fontWeight: 600 }}>⚡ {testOutput.agent}</span>
-                    <span className="font-mono" style={{ fontSize: 11, color: "#7A7A7A" }}>⏱ {testOutput.latency}</span>
-                    <span className="font-mono" style={{ fontSize: 11, color: "#7A7A7A" }}>🔤 {testOutput.tokens} tokens</span>
-                  </div>
-                  <MarkdownText content={testOutput.content} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* VERSION HISTORY TAB */}
-          {activeTab === "history" && (
-            <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <p style={{ fontSize: 13, color: "#7A7A7A" }}>Lịch sử phiên bản của <strong>{selectedPrompt.name}</strong></p>
-              {versions.map((v, i) => (
-                <div key={v.version} style={{
-                  background: "white", borderRadius: 10, border: `1px solid ${i === 0 ? "#C5E09A" : "#E0E0E0"}`,
-                  padding: 14, display: "flex", gap: 12,
-                }}>
-                  <div style={{ flexShrink: 0 }}>
-                    <span className="font-mono" style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? "#4A7C1F" : "#7A7A7A" }}>v{v.version}</span>
-                    {i === 0 && <span style={{ fontSize: 10, background: "#6DB02B", color: "white", padding: "1px 5px", borderRadius: 999, display: "block", marginTop: 2, textAlign: "center" }}>current</span>}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 12, color: "#7A7A7A", marginBottom: 6 }}>{v.date}</p>
-                    <p className="font-mono" style={{ fontSize: 11, color: "#4A4A4A", background: "#F5F5F5", padding: "6px 8px", borderRadius: 6, whiteSpace: "pre-wrap", maxHeight: 60, overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {v.content.substring(0, 120)}...
-                    </p>
-                  </div>
-                  {i > 0 && (
-                    <button onClick={() => { setEditContent(v.content); setActiveTab("editor"); addToast(`Đã rollback về v${v.version}`, "success"); }} style={{ padding: "6px 12px", border: "1px solid #E0E0E0", borderRadius: 6, background: "none", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, height: "fit-content" }}>
-                      <RotateCcw size={11} /> Rollback
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* DIFF VIEWER TAB */}
-          {activeTab === "diff" && (
-            <div className="animate-fadeIn" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div>
-                  <label style={{ fontSize: 11, color: "#7A7A7A", display: "block", marginBottom: 4 }}>Version A</label>
-                  <select value={diffVersionA} onChange={e => setDiffVersionA(Number(e.target.value))} style={{ border: "1px solid #E0E0E0", borderRadius: 6, padding: "6px 10px", fontSize: 13, outline: "none" }}>
-                    {versions.map(v => <option key={v.version} value={v.version}>v{v.version} – {v.date}</option>)}
-                  </select>
-                </div>
-                <GitCompare size={20} style={{ color: "#7A7A7A", marginTop: 14 }} />
-                <div>
-                  <label style={{ fontSize: 11, color: "#7A7A7A", display: "block", marginBottom: 4 }}>Version B</label>
-                  <select value={diffVersionB} onChange={e => setDiffVersionB(Number(e.target.value))} style={{ border: "1px solid #E0E0E0", borderRadius: 6, padding: "6px 10px", fontSize: 13, outline: "none" }}>
-                    {versions.map(v => <option key={v.version} value={v.version}>v{v.version} – {v.date}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, background: "white", borderRadius: 10, border: "1px solid #E0E0E0", overflow: "hidden" }}>
-                <div style={{ borderRight: "1px solid #E0E0E0" }}>
-                  <div style={{ padding: "8px 12px", background: "#FFEBEE", fontSize: 12, fontWeight: 600, color: "#C62828" }}>v{diffVersionA} – {vA.date}</div>
-                  {diffLines.map((line, i) => (
-                    <div key={i} className={line.changed ? "diff-removed" : ""} style={{ display: "flex", gap: 8, padding: "3px 10px" }}>
-                      <span className="font-mono" style={{ fontSize: 10, color: "#BDBDBD", width: 20, flexShrink: 0, textAlign: "right" }}>{i + 1}</span>
-                      <span className="font-mono" style={{ fontSize: 11, whiteSpace: "pre-wrap", color: "#4A4A4A" }}>{line.left || " "}</span>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div style={{ padding: "8px 12px", background: "#E8F5E9", fontSize: 12, fontWeight: 600, color: "#2E7D32" }}>v{diffVersionB} – {vB.date}</div>
-                  {diffLines.map((line, i) => (
-                    <div key={i} className={line.changed ? "diff-added" : ""} style={{ display: "flex", gap: 8, padding: "3px 10px" }}>
-                      <span className="font-mono" style={{ fontSize: 10, color: "#BDBDBD", width: 20, flexShrink: 0, textAlign: "right" }}>{i + 1}</span>
-                      <span className="font-mono" style={{ fontSize: 11, whiteSpace: "pre-wrap", color: "#4A4A4A" }}>{line.right || " "}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// PRODUCTS PAGE (basic)
-// ═══════════════════════════════════════════════════════════════════════
-const ProductsPage = ({ addToast }) => {
-  const [search, setSearch] = useState("");
-  const products = mockDocuments; // reuse for layout
-  const cats = ["Tất cả", "Cách nhiệt", "Tiêu âm", "Cách âm", "Chống cháy"];
-  const [cat, setCat] = useState("Tất cả");
-
-  const allProducts = [
-    { sku: "SW-50", name: "Remak® Stonewool 50mm", category: "Cách nhiệt", price: 85000, unit: "m²", specs: { "R-value": "1.25", "Fire Rating": "A1", NRC: "0.75", thickness: "50mm", density: "60 kg/m³" }, status: "active", tags: ["mái tôn", "nhà xưởng"] },
-    { sku: "SW-75", name: "Remak® Stonewool 75mm", category: "Cách nhiệt", price: 115000, unit: "m²", specs: { "R-value": "1.87", "Fire Rating": "A1", NRC: "0.80", thickness: "75mm", density: "60 kg/m³" }, status: "active", tags: ["mái tôn", "lò nung"] },
-    { sku: "ME-30", name: "Mút trứng Remak® 30mm", category: "Tiêu âm", price: 45000, unit: "m²", specs: { NRC: "0.85", thickness: "30mm", STC: "28" }, status: "active", tags: ["phòng thu", "studio"] },
-    { sku: "AR-50", name: "Remak® AirReflex 50mm", category: "Cách nhiệt", price: 95000, unit: "m²", specs: { "R-value": "1.45", thickness: "50mm", "U-value": "0.69" }, status: "active", tags: ["mái", "tường"] },
-  ];
-
-  const filtered = allProducts.filter(p => (cat === "Tất cả" || p.category === cat) && (p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase())));
-
-  return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: "flex", gap: 12, marginBottom: 20, alignItems: "center" }}>
-        <div style={{ display: "flex", gap: 6, alignItems: "center", background: "white", borderRadius: 8, padding: "6px 10px", border: "1px solid #E0E0E0", flex: 1, maxWidth: 280 }}>
-          <Search size={14} style={{ color: "#7A7A7A" }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm sản phẩm..." style={{ border: "none", background: "none", outline: "none", fontSize: 13, flex: 1 }} />
-        </div>
-        {cats.map(c => (
-          <button key={c} onClick={() => setCat(c)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${cat === c ? "#6DB02B" : "#E0E0E0"}`, background: cat === c ? "#6DB02B" : "white", color: cat === c ? "white" : "#4A4A4A", fontSize: 12, cursor: "pointer" }}>{c}</button>
-        ))}
-        <button onClick={() => addToast("Import CSV sẽ được hỗ trợ trong bản production", "info")} style={{ marginLeft: "auto", background: "#6DB02B", color: "white", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          + Import CSV
-        </button>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-        {filtered.map(p => (
-          <div key={p.sku} className="card-hover" style={{ background: "white", borderRadius: 12, border: "1px solid #E0E0E0", padding: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <span className="font-mono" style={{ fontSize: 11, background: "#F4FAE8", color: "#4A7C1F", padding: "2px 8px", borderRadius: 4 }}>{p.sku}</span>
-              <StatusBadge status={p.status} />
-            </div>
-            <h3 style={{ fontFamily: "Lexend", fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{p.name}</h3>
-            <p style={{ fontSize: 11, color: "#7A7A7A", marginBottom: 10 }}>{p.category}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
-              {Object.entries(p.specs).slice(0, 4).map(([k, v]) => <TechSpecBadge key={k} label={k} value={v} />)}
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #F0F0F0", paddingTop: 10 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "#E8380D" }}>{formatVND(p.price)}/{p.unit}</span>
-              <button style={{ background: "#6DB02B", color: "white", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>Chi tiết</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// USER MANAGEMENT PAGE
-// ═══════════════════════════════════════════════════════════════════════
-const UsersPage = ({ addToast }) => {
-  const [users, setUsers] = useState(mockUsers);
-  const [roleFilter, setRoleFilter] = useState("all");
-
-  const filtered = users.filter(u => roleFilter === "all" || u.role === roleFilter);
-
-  return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center" }}>
-        {[["all", "Tất cả"], ["admin", "Admin"], ["trainer", "Trainer"], ["sales", "Sales"], ["cs", "CS"]].map(([v, l]) => (
-          <button key={v} onClick={() => setRoleFilter(v)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${roleFilter === v ? "#6DB02B" : "#E0E0E0"}`, background: roleFilter === v ? "#6DB02B" : "white", color: roleFilter === v ? "white" : "#4A4A4A", fontSize: 12, cursor: "pointer" }}>{l}</button>
-        ))}
-        <button onClick={() => addToast("Tính năng thêm user sẽ có trong bản production", "info")} style={{ marginLeft: "auto", background: "#6DB02B", color: "white", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          + Thêm người dùng
-        </button>
-      </div>
-      <div style={{ background: "white", borderRadius: 12, border: "1px solid #E0E0E0", overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#F4FAE8" }}>
-              {["Người dùng", "Email", "Vai trò", "Trạng thái", "Quyền truy cập", ""].map(h => (
-                <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#4A7C1F", fontFamily: "Lexend" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(user => {
-              const rbac = {
-                admin: ["Dashboard", "KB", "Prompts", "Quotes", "Conversations", "Users", "Config"],
-                trainer: ["Dashboard", "KB", "Prompts", "Conversations"],
-                sales: ["Dashboard", "Quotes", "Conversations"],
-                cs: ["Dashboard", "Conversations"],
-              };
-              return (
-                <tr key={user.id} style={{ borderBottom: "1px solid #F5F5F5" }}>
-                  <td style={{ padding: "14px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <UserAvatar user={user} size={36} />
-                      <span style={{ fontSize: 14, fontWeight: 500 }}>{user.name}</span>
-                    </div>
+            </thead>
+            <tbody>
+              {filtered.map((p, i) => (
+                <tr key={p.sku} style={{ borderTop: `1px solid ${T.border}`, background: i % 2 === 0 ? T.card : "rgba(244,246,243,.4)" }}>
+                  <td style={{ padding: "10px 16px" }}>
+                    <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: T.blue, background: T.blueLight, padding: "2px 7px", borderRadius: 4 }}>{p.sku}</span>
                   </td>
-                  <td style={{ padding: "14px 16px", fontSize: 13, color: "#7A7A7A" }}>{user.email}</td>
-                  <td style={{ padding: "14px 16px" }}><StatusBadge status={user.role} /></td>
-                  <td style={{ padding: "14px 16px" }}><StatusBadge status={user.status} /></td>
-                  <td style={{ padding: "14px 16px" }}>
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      {(rbac[user.role] || []).map(m => (
-                        <span key={m} style={{ fontSize: 10, background: "#F4FAE8", color: "#4A7C1F", padding: "1px 6px", borderRadius: 4 }}>{m}</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td style={{ padding: "14px 16px" }}>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => addToast(`Chỉnh sửa user ${user.name}`, "info")} style={{ padding: "4px 10px", border: "1px solid #E0E0E0", borderRadius: 6, background: "none", fontSize: 11, cursor: "pointer" }}>Sửa</button>
-                      {user.status === "active" ? (
-                        <button onClick={() => { setUsers(p => p.map(u => u.id === user.id ? { ...u, status: "inactive" } : u)); addToast(`Đã vô hiệu hóa ${user.name}`, "success"); }} style={{ padding: "4px 10px", border: "1px solid #FFCDD2", borderRadius: 6, background: "none", color: "#C62828", fontSize: 11, cursor: "pointer" }}>Khóa</button>
-                      ) : (
-                        <button onClick={() => { setUsers(p => p.map(u => u.id === user.id ? { ...u, status: "active" } : u)); addToast(`Đã mở khóa ${user.name}`, "success"); }} style={{ padding: "4px 10px", border: "1px solid #C5E09A", borderRadius: 6, background: "none", color: "#4A7C1F", fontSize: 11, cursor: "pointer" }}>Mở khóa</button>
-                      )}
+                  <td style={{ padding: "10px 16px", fontSize: 13, fontWeight: 600, color: T.text }}>{p.name}</td>
+                  <td style={{ padding: "10px 16px", fontSize: 11, color: T.textMid }}>{p.cat}</td>
+                  <td style={{ padding: "10px 16px", fontSize: 12, fontWeight: 700, color: T.text }}>{p.price}</td>
+                  <td style={{ padding: "10px 16px", fontSize: 12, color: T.textMid }}>{p.nrc}</td>
+                  <td style={{ padding: "10px 16px", fontSize: 12, color: T.textMid }}>{p.stc}</td>
+                  <td style={{ padding: "10px 16px" }}><Badge status={p.status} /></td>
+                  <td style={{ padding: "10px 16px" }}>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <Btn variant="secondary" size="sm">✏️</Btn>
+                      <Btn variant="danger" size="sm">🗑️</Btn>
                     </div>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Error report section */}
+          <div style={{ padding: "12px 20px", borderTop: `1px solid ${T.border}`, background: T.redLight, display: step < 1 ? "none" : "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 12, color: T.red, fontWeight: 600 }}>⚠️ 2 lỗi phát hiện: SKU trùng lặp (dòng 12, 31)</span>
+            <Btn variant="secondary" size="sm">📥 Tải báo cáo lỗi</Btn>
+          </div>
+        </Card>
       </div>
     </div>
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// MAIN APP
-// ═══════════════════════════════════════════════════════════════════════
-export default function RemakChatbotApp() {
-  const [activeScreen, setActiveScreen] = useState("dashboard");
-  const [toasts, setToasts] = useState([]);
-  const currentUser = mockUsers[0]; // Admin
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+const PAGE_META = {
+  dashboard:       { title: "Tổng quan",              bread: "Admin" },
+  users:           { title: "Người dùng",              bread: "Admin › Người dùng" },
+  kb_upload:       { title: "KB – Tải lên tài liệu",   bread: "Admin › Knowledge Base › Tài liệu" },
+  kb_tags:         { title: "KB – Danh mục & Tag",      bread: "Admin › Knowledge Base › Phân loại" },
+  product_import:  { title: "Nhập dữ liệu sản phẩm",   bread: "Admin › Sản phẩm › Import" },
+  login:           { title: "Đăng nhập", bread: "" },
+};
 
-  const addToast = useCallback((message, type = "success") => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-  }, []);
+const ROLE_COLORS = {
+  admin: "#5B21B6", sales: "#2563EB", trainer: "#538A1F", cs: "#9A3412",
+};
 
-  const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
+export default function RemakAdminPortal() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [active, setActive] = useState("dashboard");
 
-  const pageConfig = {
-    dashboard: { title: "Dashboard Tổng quan", component: <AdminDashboard addToast={addToast} /> },
-    conversations: { title: "Quản lý Hội thoại", component: <ConversationManager addToast={addToast} /> },
-    products: { title: "Danh mục Sản phẩm", component: <ProductsPage addToast={addToast} /> },
-    quotes: { title: "Quản lý Báo giá", component: <QuoteManager addToast={addToast} /> },
-    knowledge: { title: "Knowledge Base Manager", component: <KBManager addToast={addToast} /> },
-    prompts: { title: "Prompt Manager", component: <PromptManager addToast={addToast} /> },
-    users: { title: "Quản lý Người dùng", component: <UsersPage addToast={addToast} /> },
+  if (!currentUser) return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
+
+  const meta = PAGE_META[active] || PAGE_META.dashboard;
+
+  const renderPage = () => {
+    switch (active) {
+      case "dashboard":      return <Dashboard />;
+      case "users":          return <UserManagement />;
+      case "kb_upload":      return <KBUpload />;
+      case "kb_tags":        return <KBTags />;
+      case "product_import": return <ProductImport />;
+      default:
+        return (
+          <div style={{ padding: 28 }}>
+            <Card style={{ padding: 40, textAlign: "center" }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🚧</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: T.text, marginBottom: 6 }}>Module đang phát triển</div>
+              <div style={{ fontSize: 13, color: T.textLight }}>Tính năng này sẽ được hoàn thành trong Sprint tiếp theo</div>
+            </Card>
+          </div>
+        );
+    }
   };
 
-  const { title, component } = pageConfig[activeScreen] || pageConfig.dashboard;
-
   return (
-    <>
-      <FontInjector />
-      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#FAFAFA" }}>
-        <Sidebar activeItem={activeScreen} onNavigate={setActiveScreen} currentUser={currentUser} />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <TopBar pageTitle={title} currentUser={currentUser} notificationCount={3} toasts={toasts} removeToast={removeToast} />
-          <div style={{ flex: 1, overflowY: activeScreen === "conversations" || activeScreen === "quotes" || activeScreen === "prompts" ? "hidden" : "auto" }}>
-            {component}
+    <div style={{ display: "flex", fontFamily: "'Inter', 'Segoe UI', sans-serif", minHeight: "100vh", background: T.bg }}>
+      {/* Sidebar with dynamic user info */}
+      <div style={{ width: 220, background: T.sidebar, color: "#fff", display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0, flexShrink: 0 }}>
+        <div style={{ padding: "20px 18px 16px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 8, background: T.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏗️</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.03em", color: "#fff" }}>REMAK ADMIN</div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,.45)", marginTop: 1 }}>Sale Support Chatbot</div>
+            </div>
+          </div>
+          <div style={{ marginTop: 12, background: "rgba(109,176,43,.18)", borderRadius: 6, padding: "6px 10px", display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: T.green }} />
+            <span style={{ fontSize: 10, color: T.greenMid, fontWeight: 600 }}>Hệ thống hoạt động tốt</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "10px 0" }}>
+          {MENU.map(g => (
+            <div key={g.group} style={{ marginBottom: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.28)", padding: "10px 18px 4px", letterSpacing: "0.1em" }}>{g.group}</div>
+              {g.items.map(item => {
+                const isAct = active === item.id;
+                return (
+                  <div key={item.id} onClick={() => setActive(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 18px", cursor: "pointer", background: isAct ? T.sidebarAct : "transparent", borderLeft: isAct ? "3px solid " + T.green : "3px solid transparent", color: isAct ? "#fff" : "rgba(255,255,255,.55)", fontSize: 13, fontWeight: isAct ? 600 : 400, transition: "all .15s" }}>
+                    <span style={{ fontSize: 14, width: 18, textAlign: "center" }}>{item.icon}</span>
+                    {item.label}
+                    {isAct && <div style={{ marginLeft: "auto", width: 5, height: 5, borderRadius: "50%", background: T.green }} />}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        {/* Dynamic user footer */}
+        <div style={{ borderTop: "1px solid rgba(255,255,255,.08)", padding: "14px 18px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", background: ROLE_COLORS[currentUser.role] || T.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{currentUser.icon}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentUser.name}</div>
+              <div style={{ fontSize: 10, color: currentUser.color, fontWeight: 600 }}>{currentUser.label}</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,.35)", marginBottom: 10, paddingLeft: 2 }}>{currentUser.desc}</div>
+          <div onClick={() => setCurrentUser(null)} style={{ fontSize: 12, color: T.orange, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
+            <span>↪</span> Đăng xuất
           </div>
         </div>
       </div>
-      {/* Chat Widget always visible */}
-      <ChatWidget addToast={addToast} />
-    </>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <TopBar title={meta.title} breadcrumb={meta.bread} />
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {renderPage()}
+        </div>
+      </div>
+    </div>
   );
 }
