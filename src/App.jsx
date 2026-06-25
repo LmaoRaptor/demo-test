@@ -132,11 +132,12 @@ const MENU = [
   ]},
   { group: "QUẢN LÝ", items: [
     { id: "users",           icon: "👤", label: "Người dùng" },
+    { id: "channel_config",  icon: "📡", label: "Kênh (Widget & Zalo)" },
   ]},
   { group: "HỆ THỐNG", items: [
-    { id: "prompt_config",   icon: "🤖", label: "Cấu hình AI" },
+    { id: "prompt_config",   icon: "🤖", label: "Prompt & AI Monitor" },
     { id: "routing_rules",   icon: "⚙️", label: "Routing Rules" },
-    { id: "audit_log",       icon: "📜", label: "Audit Log" },
+    { id: "audit_log",       icon: "📜", label: "Audit Log & PII" },
   ]},
 ];
 
@@ -5034,15 +5035,1328 @@ const SupplierPortal = () => {
 };
 
 
+// ════════════════════════════════════════════════════════════════════════════
+// E4 – CONVERSATIONS (Hội thoại & Case Management) — FN4.1 / F4.2 / F4.3 / F4.4
+// ════════════════════════════════════════════════════════════════════════════
+const CONV_DATA = [
+  { id:"C001", channel:"web",  visitor:"Nguyễn Văn A",       preview:"Hỏi về cách âm phòng thu, cần báo giá 80m²",          intent:"Tư vấn kỹ thuật", status:"assigned",   agent:"sales@remak.vn", tags:["lead-hot","cần-báo-giá"],          createdAt:"08/06 09:12", updatedAt:"08/06 09:45", messages:12, confidence:0.92, escalated:false, label:"good" },
+  { id:"C002", channel:"zalo", visitor:"Trần Thị B (Zalo)",  preview:"Muốn so sánh bông đá Stonewool và AirReflex",          intent:"So sánh sản phẩm",status:"handoff",    agent:"cs@remak.vn",    tags:["lead-warm"],                        createdAt:"08/06 08:30", updatedAt:"08/06 09:40", messages:8,  confidence:0.54, escalated:true,  label:"needs_improvement" },
+  { id:"C003", channel:"web",  visitor:"Lê Minh C",           preview:"Hỏi tiêu chuẩn chống cháy cấp B1 cho nhà xưởng",     intent:"Thông số kỹ thuật",status:"ai_only",   agent:"AI",             tags:[],                                    createdAt:"08/06 10:01", updatedAt:"08/06 10:22", messages:5,  confidence:0.88, escalated:false, label:null },
+  { id:"C004", channel:"zalo", visitor:"Công ty XD Phú An",  preview:"Cần 2000m² bông khoáng cho dự án nhà máy ở Bình Dương",intent:"Đặt hàng lớn",    status:"assigned",   agent:"nctruong@remak.vn",tags:["lead-hot","enterprise","cần-báo-giá"], createdAt:"07/06 14:20", updatedAt:"08/06 08:15", messages:23, confidence:0.79, escalated:false, label:"good" },
+  { id:"C005", channel:"web",  visitor:"Phạm D",              preview:"Sản phẩm này có sẵn hàng không?",                     intent:"Kiểm tra tồn kho", status:"resolved",   agent:"AI",             tags:["lead-cold"],                        createdAt:"07/06 11:00", updatedAt:"07/06 11:05", messages:3,  confidence:0.95, escalated:false, label:"good" },
+  { id:"C006", channel:"web",  visitor:"Hoàng E",             preview:"Cách tính R-value cho mái tôn 300m²",                 intent:"Tính toán kỹ thuật",status:"ai_only",   agent:"AI",             tags:[],                                    createdAt:"08/06 10:45", updatedAt:"08/06 11:00", messages:7,  confidence:0.85, escalated:false, label:null },
+];
+
+const CONV_MSGS = [
+  { id:1, role:"user",   content:"Chào Remak, tôi cần tư vấn cách âm cho phòng thu âm diện tích 80m², trần cao 3.5m. Ngân sách khoảng 150 triệu.", time:"09:12" },
+  { id:2, role:"ai",     content:"Chào anh/chị! Với phòng thu âm 80m² và trần 3.5m, Remak đề xuất giải pháp kết hợp:\n\n**Tường (60m²):** Mút trứng tiêu âm 50mm (NRC=0.85) + Bông đá Stonewool 50mm phía sau\n**Trần (80m²):** Panel cách âm Acoustic 30mm\n**Sàn:** Thảm tiêu âm 10mm\n\nNRC tổng thể đạt 0.80–0.88, phù hợp tiêu chuẩn phòng thu.", time:"09:13", citations:["Catalogue Stonewool 2024 – trang 12","Mút trứng tiêu âm spec sheet"] },
+  { id:3, role:"user",   content:"Chi phí ước tính bao nhiêu?", time:"09:15" },
+  { id:4, role:"ai",     content:"Ước tính sơ bộ:\n- Mút trứng 50mm: 60m² × 52.000đ = **3.12M**\n- Stonewool 50mm: 60m² × 45.000đ = **2.7M**\n- Acoustic panel: 80m² × 68.000đ = **5.44M**\n- Thảm tiêu âm: 80m² × 25.000đ = **2M**\n\n**Tổng ước tính: ~13.26M** (chưa bao gồm thi công)\n\nKhuyến nghị tạo báo giá chi tiết để có giá chính xác.", time:"09:16", citations:["Product_Spec_Table.xlsx – Sheet Pricing"] },
+  { id:5, role:"user",   content:"Được, cho tôi báo giá chính thức.", time:"09:30" },
+  { id:6, role:"ai",     content:"Tôi đã tạo draft báo giá #Q-2026-042 cho anh/chị. Nhân viên Sales sẽ liên hệ để xác nhận chi tiết và điều chỉnh theo yêu cầu cụ thể.", time:"09:30", isHandoff:true },
+];
+
+const ConversationsPage = () => {
+  const [selectedConv, setSelectedConv] = useState(CONV_DATA[0]);
+  const [search, setSearch]             = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterChannel, setFilterChannel] = useState("all");
+  const [replyText, setReplyText]       = useState("");
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [labelModal, setLabelModal]     = useState(null);
+  const [activeTab, setActiveTab]       = useState("chat"); // chat | labeling | rag_review
+  const [toast, setToast]               = useState(null);
+
+  const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),2500); };
+
+  const STATUS_CFG = {
+    ai_only:  { label:"AI đang xử lý", color:"#2563EB", bg:"#EFF6FF", icon:"🤖" },
+    assigned: { label:"Đã gán Sales",  color:"#6DB02B", bg:"#EBF5E0", icon:"👤" },
+    handoff:  { label:"Chờ CS",        color:"#D97706", bg:"#FEF3C7", icon:"⏳" },
+    resolved: { label:"Đã xử lý",     color:"#6B7280", bg:"#F4F6F3", icon:"✅" },
+  };
+
+  const CHANNEL_ICON = { web:"🌐", zalo:"💙" };
+  const LABEL_OPTS   = [
+    { value:"good",             label:"✅ Tốt",                  color:"#166534", bg:"#DCFCE7" },
+    { value:"needs_improvement",label:"⚠️ Cần cải thiện",         color:"#92400E", bg:"#FEF3C7" },
+    { value:"bad",              label:"❌ Sai hoàn toàn",         color:"#991B1B", bg:"#FEE2E2" },
+  ];
+
+  const TAGS_POOL = ["lead-hot","lead-warm","lead-cold","cần-báo-giá","enterprise","follow-up","VIP","đã-mua","tư-vấn-lại"];
+
+  const filtered = CONV_DATA.filter(c => {
+    const q = search.toLowerCase();
+    const mQ  = c.visitor.toLowerCase().includes(q)||c.preview.toLowerCase().includes(q);
+    const mSt = filterStatus==="all" || c.status===filterStatus;
+    const mCh = filterChannel==="all" || c.channel===filterChannel;
+    return mQ && mSt && mCh;
+  });
+
+  const conv = selectedConv;
+  const stCfg = STATUS_CFG[conv?.status]||STATUS_CFG.ai_only;
+
+  const TabBtn = ({id,label,icon}) => (
+    <button onClick={()=>setActiveTab(id)} style={{ border:"none",cursor:"pointer",fontWeight:activeTab===id?700:500,fontSize:12,padding:"8px 12px",borderBottom:activeTab===id?`2px solid ${T.green}`:"2px solid transparent",background:"transparent",color:activeTab===id?T.green:T.textMid }}>
+      {icon} {label}
+    </button>
+  );
+
+  return (
+    <div style={{ display:"flex",height:"calc(100vh - 56px)",overflow:"hidden",fontFamily:"'Inter','Segoe UI',sans-serif",position:"relative" }}>
+      {toast && <div style={{ position:"fixed",top:20,right:24,zIndex:2000,background:toast.type==="success"?T.green:T.orange,color:"#fff",padding:"10px 18px",borderRadius:8,fontSize:13,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.2)" }}>{toast.msg}</div>}
+
+      {/* ── LEFT: Conversation list ─────────────────────────────────────── */}
+      <div style={{ width:320,flexShrink:0,borderRight:`1px solid ${T.border}`,display:"flex",flexDirection:"column",background:T.card }}>
+        {/* Filters */}
+        <div style={{ padding:"12px 14px",borderBottom:`1px solid ${T.border}` }}>
+          <Input placeholder="Tìm hội thoại..." value={search} onChange={e=>setSearch(e.target.value)} icon="🔍" />
+          <div style={{ display:"flex",gap:6,marginTop:8 }}>
+            {[["all","Tất cả"],["ai_only","AI"],["assigned","Sales"],["handoff","CS"],["resolved","Xong"]].map(([k,l])=>(
+              <button key={k} onClick={()=>setFilterStatus(k)} style={{ flex:1,border:"none",cursor:"pointer",padding:"4px 6px",fontSize:10,fontWeight:filterStatus===k?700:400,background:filterStatus===k?T.green:T.bg,color:filterStatus===k?"#fff":T.textMid,borderRadius:5 }}>{l}</button>
+            ))}
+          </div>
+          <div style={{ display:"flex",gap:6,marginTop:6 }}>
+            {[["all","Tất cả"],["web","Web"],["zalo","Zalo"]].map(([k,l])=>(
+              <button key={k} onClick={()=>setFilterChannel(k)} style={{ border:`1px solid ${filterChannel===k?T.blue:T.border}`,cursor:"pointer",padding:"3px 10px",fontSize:10,fontWeight:filterChannel===k?700:400,background:filterChannel===k?T.blueLight:T.card,color:filterChannel===k?T.blue:T.textMid,borderRadius:10 }}>{l}</button>
+            ))}
+            <span style={{ marginLeft:"auto",fontSize:10,color:T.textLight,alignSelf:"center" }}>{filtered.length} cuộc</span>
+          </div>
+        </div>
+        {/* List */}
+        <div style={{ flex:1,overflowY:"auto" }}>
+          {filtered.map(c => {
+            const st = STATUS_CFG[c.status]||STATUS_CFG.ai_only;
+            const isSel = selectedConv?.id===c.id;
+            return (
+              <div key={c.id} onClick={()=>setSelectedConv(c)} style={{ padding:"12px 14px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:isSel?T.greenLight:"transparent",borderLeft:isSel?`3px solid ${T.green}`:"3px solid transparent",transition:"all .12s" }}>
+                <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:4 }}>
+                  <span style={{ fontSize:14 }}>{CHANNEL_ICON[c.channel]}</span>
+                  <span style={{ fontSize:12,fontWeight:700,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{c.visitor}</span>
+                  <span style={{ fontSize:9,background:st.bg,color:st.color,padding:"1px 6px",borderRadius:8,fontWeight:700,flexShrink:0 }}>{st.icon}</span>
+                </div>
+                <div style={{ fontSize:11,color:T.textMid,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:4 }}>{c.preview}</div>
+                <div style={{ display:"flex",gap:4,alignItems:"center" }}>
+                  {c.tags.slice(0,2).map(t=><span key={t} style={{ fontSize:8,background:T.bg,border:`1px solid ${T.border}`,padding:"1px 5px",borderRadius:6,color:T.textMid }}>{t}</span>)}
+                  {c.escalated && <span style={{ fontSize:8,background:T.redLight,color:T.red,padding:"1px 5px",borderRadius:6,fontWeight:700 }}>escalated</span>}
+                  <span style={{ marginLeft:"auto",fontSize:9,color:T.textLight }}>{c.updatedAt}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── CENTER: Chat thread ──────────────────────────────────────────── */}
+      <div style={{ flex:1,display:"flex",flexDirection:"column",minWidth:0 }}>
+        {/* Conv header */}
+        {conv && (
+          <div style={{ padding:"10px 18px",borderBottom:`1px solid ${T.border}`,background:T.card,display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                <span style={{ fontSize:16 }}>{CHANNEL_ICON[conv.channel]}</span>
+                <span style={{ fontWeight:700,fontSize:14,color:T.text }}>{conv.visitor}</span>
+                <span style={{ fontSize:10,background:stCfg.bg,color:stCfg.color,padding:"2px 8px",borderRadius:6,fontWeight:700 }}>{stCfg.icon} {stCfg.label}</span>
+                <span style={{ fontSize:10,background:T.bg,color:T.textMid,padding:"2px 8px",borderRadius:6 }}>#{conv.id}</span>
+                {conv.confidence && <span style={{ fontSize:10,color:conv.confidence>0.7?T.green:"#D97706",fontWeight:700 }}>AI {Math.round(conv.confidence*100)}%</span>}
+              </div>
+              <div style={{ fontSize:10,color:T.textLight,marginTop:2 }}>{conv.intent} · {conv.messages} tin nhắn · {conv.updatedAt}</div>
+            </div>
+            <div style={{ display:"flex",gap:6 }}>
+              <Btn variant="secondary" size="sm" onClick={()=>setShowTagModal(true)}>🏷 Tag</Btn>
+              <Btn variant="secondary" size="sm" onClick={()=>setLabelModal(conv)}>⭐ Label</Btn>
+              <Btn variant="primary" size="sm">📋 Tạo báo giá</Btn>
+              {conv.status!=="resolved" && <Btn variant="danger" size="sm" style={{ background:"#6B7280" }}>✅ Resolve</Btn>}
+            </div>
+          </div>
+        )}
+
+        {/* Sub-tabs */}
+        <div style={{ borderBottom:`1px solid ${T.border}`,display:"flex",padding:"0 16px",background:T.card }}>
+          <TabBtn id="chat"       label="Hội thoại" icon="💬" />
+          <TabBtn id="labeling"   label="Labeling & Feedback" icon="⭐" />
+          <TabBtn id="rag_review" label="RAG Relevance" icon="🔍" />
+        </div>
+
+        {/* Chat messages */}
+        {activeTab==="chat" && (
+          <div style={{ flex:1,overflowY:"auto",padding:20,display:"flex",flexDirection:"column",gap:14,background:"#F8FAF6" }}>
+            {CONV_MSGS.map(msg => (
+              <div key={msg.id} style={{ display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start",gap:4 }}>
+                {msg.isHandoff && (
+                  <div style={{ alignSelf:"center",background:T.yellowLight,border:"1px solid #FDE68A",borderRadius:8,padding:"6px 14px",fontSize:11,color:"#92400E",margin:"4px 0" }}>
+                    ↩ Handoff to Sales — Draft Quote #Q-2026-042 created
+                  </div>
+                )}
+                <div style={{
+                  maxWidth:"72%",padding:"10px 14px",borderRadius:msg.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",
+                  background:msg.role==="user"?"#DCF8C6":T.card,
+                  border:msg.role==="ai"?`1px solid ${T.border}`:"none",
+                  boxShadow:"0 1px 3px rgba(0,0,0,.08)",
+                }}>
+                  {msg.role==="ai" && <div style={{ fontSize:10,fontWeight:700,color:T.green,marginBottom:4 }}>🤖 AI Remak</div>}
+                  <div style={{ fontSize:13,color:T.text,lineHeight:1.6,whiteSpace:"pre-line" }}>{msg.content}</div>
+                  {msg.citations && (
+                    <div style={{ marginTop:8,paddingTop:8,borderTop:`1px solid ${T.border}` }}>
+                      <div style={{ fontSize:10,fontWeight:700,color:T.textLight,marginBottom:4 }}>📚 Nguồn tham khảo:</div>
+                      {msg.citations.map(c=>(
+                        <div key={c} style={{ fontSize:10,color:T.blue,display:"flex",alignItems:"center",gap:4,marginBottom:2 }}>
+                          <span>📄</span>{c}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ fontSize:9,color:T.textLight,marginTop:4,textAlign:"right" }}>{msg.time}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Labeling tab */}
+        {activeTab==="labeling" && (
+          <div style={{ flex:1,overflowY:"auto",padding:20,display:"flex",flexDirection:"column",gap:14 }}>
+            <div style={{ background:T.blueLight,border:`1px solid #BFDBFE`,borderRadius:8,padding:12,fontSize:12,color:T.blue }}>
+              💡 Labeling giúp cải thiện AI. Gắn nhãn các câu trả lời không tốt để Trainer review và tạo golden dataset.
+            </div>
+            {CONV_MSGS.filter(m=>m.role==="ai").map(msg=>(
+              <Card key={msg.id} style={{ padding:14 }}>
+                <div style={{ fontSize:12,color:T.textMid,marginBottom:8,lineHeight:1.6 }}>{msg.content.slice(0,120)}...</div>
+                <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+                  {LABEL_OPTS.map(l=>(
+                    <button key={l.value} style={{ border:`1.5px solid ${l.color}40`,cursor:"pointer",padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:600,background:l.bg,color:l.color,transition:"all .12s" }}>
+                      {l.label}
+                    </button>
+                  ))}
+                  <input placeholder="Ghi chú lý do (tùy chọn)..." style={{ flex:1,border:`1px solid ${T.border}`,borderRadius:6,padding:"4px 10px",fontSize:11,minWidth:200 }} />
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* RAG Review tab */}
+        {activeTab==="rag_review" && (
+          <div style={{ flex:1,overflowY:"auto",padding:20,display:"flex",flexDirection:"column",gap:12 }}>
+            <div style={{ fontSize:13,fontWeight:700,color:T.text,marginBottom:2 }}>RAG Relevance Review — {conv?.id}</div>
+            <div style={{ fontSize:11,color:T.textLight,marginBottom:8 }}>Đánh dấu chunks nào relevant/không để cải thiện retrieval.</div>
+            {[
+              { chunk:"Catalogue_Stonewool_2024.pdf – trang 12", content:"Mút trứng tiêu âm Remak® NRC=0.85, độ dày 50mm, phù hợp phòng thu, home cinema...", score:0.94, marked:true },
+              { chunk:"Datasheet_AirReflex.pdf – trang 3", content:"AirReflex 20mm chuyên cách nhiệt mái tôn, R-value=0.71 m²K/W, không phù hợp tiêu âm...", score:0.61, marked:false },
+              { chunk:"Product_Spec_Table.xlsx – Sheet Pricing", content:"Bảng giá Q2-2026: Mút trứng 50mm: 52,000 VND/m², Stonewool 50mm: 45,000 VND/m²...", score:0.88, marked:true },
+            ].map((chunk,i)=>(
+              <div key={i} style={{ padding:12,borderRadius:8,border:`1px solid ${chunk.marked?T.greenMid:T.border}`,background:chunk.marked?T.greenLight:T.card }}>
+                <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:6 }}>
+                  <span style={{ fontSize:11,fontWeight:700,color:T.blue }}>📄 {chunk.chunk}</span>
+                  <span style={{ fontSize:11,fontWeight:800,color:chunk.score>0.8?T.green:"#D97706",marginLeft:"auto" }}>Score: {chunk.score}</span>
+                </div>
+                <div style={{ fontSize:11,color:T.textMid,lineHeight:1.5,marginBottom:8 }}>{chunk.content}</div>
+                <div style={{ display:"flex",gap:6 }}>
+                  <Btn variant={chunk.marked?"primary":"secondary"} size="sm">✅ Relevant</Btn>
+                  <Btn variant={!chunk.marked?"danger":"secondary"} size="sm">❌ Irrelevant</Btn>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Reply bar */}
+        {conv && conv.status!=="resolved" && activeTab==="chat" && (
+          <div style={{ padding:"12px 18px",borderTop:`1px solid ${T.border}`,background:T.card,display:"flex",gap:10,alignItems:"flex-end" }}>
+            <textarea value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder="Gõ phản hồi (Sales override AI)... hoặc để AI tiếp tục" rows={2}
+              style={{ flex:1,border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 12px",fontSize:12,resize:"none",outline:"none" }} />
+            <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+              <Btn variant="primary" size="sm" disabled={!replyText} onClick={()=>{ showToast("Đã gửi phản hồi"); setReplyText(""); }}>Gửi ↑</Btn>
+              <Btn variant="secondary" size="sm">AI tiếp</Btn>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── RIGHT: Context panel ─────────────────────────────────────────── */}
+      {conv && (
+        <div style={{ width:280,flexShrink:0,borderLeft:`1px solid ${T.border}`,overflowY:"auto",background:T.card }}>
+          <div style={{ padding:"12px 16px",borderBottom:`1px solid ${T.border}`,fontWeight:700,fontSize:13,color:T.text }}>Thông tin hội thoại</div>
+          <div style={{ padding:16,display:"flex",flexDirection:"column",gap:14 }}>
+            {/* Tags */}
+            <div>
+              <div style={{ fontSize:10,fontWeight:700,color:T.textLight,marginBottom:6,letterSpacing:"0.06em" }}>TAGS</div>
+              <div style={{ display:"flex",flexWrap:"wrap",gap:4 }}>
+                {conv.tags.map(t=><span key={t} style={{ fontSize:10,background:T.greenLight,color:T.greenDark,padding:"2px 8px",borderRadius:10,border:`1px solid ${T.greenMid}` }}>{t}</span>)}
+                <span onClick={()=>setShowTagModal(true)} style={{ fontSize:10,background:T.bg,color:T.textMid,padding:"2px 8px",borderRadius:10,border:`1px dashed ${T.border}`,cursor:"pointer" }}>+ Thêm</span>
+              </div>
+            </div>
+            {/* Label */}
+            <div>
+              <div style={{ fontSize:10,fontWeight:700,color:T.textLight,marginBottom:6,letterSpacing:"0.06em" }}>LABEL CHẤT LƯỢNG</div>
+              {conv.label
+                ? <span style={{ fontSize:11,fontWeight:700,background:LABEL_OPTS.find(l=>l.value===conv.label)?.bg,color:LABEL_OPTS.find(l=>l.value===conv.label)?.color,padding:"3px 10px",borderRadius:5 }}>
+                    {LABEL_OPTS.find(l=>l.value===conv.label)?.label}
+                  </span>
+                : <span style={{ fontSize:11,color:T.textLight,fontStyle:"italic" }}>Chưa gắn nhãn</span>
+              }
+            </div>
+            {/* AI stats */}
+            <div>
+              <div style={{ fontSize:10,fontWeight:700,color:T.textLight,marginBottom:6,letterSpacing:"0.06em" }}>AI METRICS</div>
+              {[["Confidence",`${Math.round(conv.confidence*100)}%`],["Intent",conv.intent],["Messages",conv.messages],["Channel",conv.channel.toUpperCase()]].map(([k,v])=>(
+                <div key={k} style={{ display:"flex",justifyContent:"space-between",fontSize:11,padding:"4px 0",borderBottom:`1px solid ${T.border}` }}>
+                  <span style={{ color:T.textLight }}>{k}</span>
+                  <span style={{ color:T.text,fontWeight:600 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+            {/* Escalation */}
+            {conv.escalated && (
+              <div style={{ background:T.redLight,border:"1px solid #FECACA",borderRadius:7,padding:10,fontSize:11,color:T.red }}>
+                ⚠️ Hội thoại này đã được escalate. CS đang xử lý.
+              </div>
+            )}
+            {/* Quick actions */}
+            <div>
+              <div style={{ fontSize:10,fontWeight:700,color:T.textLight,marginBottom:6,letterSpacing:"0.06em" }}>HÀNH ĐỘNG NHANH</div>
+              <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+                <Btn variant="secondary" size="sm" style={{ justifyContent:"center" }}>📋 Tạo Draft Quote</Btn>
+                <Btn variant="secondary" size="sm" style={{ justifyContent:"center" }}>📧 Gửi email tóm tắt</Btn>
+                <Btn variant="secondary" size="sm" style={{ justifyContent:"center" }}>🔗 Xem lịch sử KH</Btn>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tag Modal */}
+      {showTagModal && (
+        <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.45)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999 }}>
+          <Card style={{ width:380,padding:22 }}>
+            <div style={{ fontWeight:700,fontSize:14,color:T.text,marginBottom:12 }}>🏷 Gán tag cho hội thoại</div>
+            <div style={{ display:"flex",flexWrap:"wrap",gap:6,marginBottom:14 }}>
+              {TAGS_POOL.map(t=>(
+                <span key={t} onClick={()=>showToast(`Tag "${t}" đã gán`)} style={{ fontSize:11,cursor:"pointer",background:conv.tags.includes(t)?T.greenLight:T.bg,color:conv.tags.includes(t)?T.greenDark:T.textMid,border:`1px solid ${conv.tags.includes(t)?T.green:T.border}`,padding:"4px 10px",borderRadius:10,fontWeight:conv.tags.includes(t)?700:400 }}>
+                  {conv.tags.includes(t)?"✓ ":""}{t}
+                </span>
+              ))}
+            </div>
+            <div style={{ display:"flex",gap:8 }}>
+              <Input placeholder="Tag mới..." style={{ flex:1 }} />
+              <Btn variant="secondary" size="sm" onClick={()=>setShowTagModal(false)}>Xong</Btn>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// E5 – QUOTES (Báo giá tự động) — FN5.1 / F5.2
+// ════════════════════════════════════════════════════════════════════════════
+const QUOTES_DATA = [
+  { id:"Q-2026-042", conv:"C001", customer:"Nguyễn Văn A",      status:"draft",    salesOwner:"nctruong@remak.vn", total:13260000, vat:1326000, items:[{sku:"RMK-MT-30",name:"Mút trứng tiêu âm 50mm",qty:60,unit:"m²",price:52000,disc:0},{sku:"RMK-SW-50",name:"Bông đá Stonewool 50mm",qty:60,unit:"m²",price:45000,disc:5},{sku:"RMK-AC-25",name:"Acoustic Panel 30mm",qty:80,unit:"m²",price:68000,disc:0}], createdAt:"08/06/2026 09:30", updatedAt:"08/06 09:45", aiExtracted:true, notes:"Phòng thu âm 80m²" },
+  { id:"Q-2026-041", conv:"C004", customer:"Công ty XD Phú An", status:"assigned", salesOwner:"nctruong@remak.vn", total:98000000, vat:9800000, items:[{sku:"RMK-SW-50",name:"Bông đá Stonewool 50mm",qty:2000,unit:"m²",price:45000,disc:8}], createdAt:"07/06/2026 14:30", updatedAt:"08/06 08:15", aiExtracted:true, notes:"Nhà máy Bình Dương 2000m²" },
+  { id:"Q-2026-040", conv:"C003", customer:"Lê Minh C",          status:"draft",    salesOwner:null,               total:7200000, vat:720000, items:[{sku:"RMK-FP-B1",name:"Tấm chống cháy B1",qty:60,unit:"m²",price:120000,disc:0}], createdAt:"07/06/2026 10:00", updatedAt:"07/06 10:20", aiExtracted:true, notes:"Nhà xưởng cấp B1" },
+];
+
+const QuotesPage = () => {
+  const [quotes, setQuotes]           = useState(QUOTES_DATA);
+  const [selectedQuote, setSelectedQuote] = useState(QUOTES_DATA[0]);
+  const [editItems, setEditItems]     = useState(null);
+  const [search, setSearch]           = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [toast, setToast]             = useState(null);
+  const [assignModal, setAssignModal] = useState(null);
+
+  const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),2500); };
+
+  const Q_STATUS = {
+    draft:    { label:"Draft",       color:"#D97706", bg:"#FEF3C7", icon:"📝" },
+    assigned: { label:"Đã gán",      color:"#2563EB", bg:"#EFF6FF", icon:"👤" },
+    approved: { label:"Đã duyệt",    color:"#166534", bg:"#DCFCE7", icon:"✅" },
+    rejected: { label:"Từ chối",     color:"#991B1B", bg:"#FEE2E2", icon:"❌" },
+  };
+
+  const fmt = (n) => n?.toLocaleString("vi-VN");
+  const filtered = quotes.filter(q=>{
+    const mQ  = q.customer.toLowerCase().includes(search.toLowerCase())||q.id.includes(search);
+    const mSt = filterStatus==="all"||q.status===filterStatus;
+    return mQ && mSt;
+  });
+  const q = selectedQuote;
+  const items = editItems || q?.items;
+
+  const updateItem = (idx,field,val) => {
+    const next = [...items];
+    next[idx] = {...next[idx],[field]:field==="qty"||field==="price"||field==="disc"?Number(val):val};
+    setEditItems(next);
+  };
+  const lineTotal = (item) => Math.round(item.qty*item.price*(1-item.disc/100));
+  const subTotal  = items?.reduce((s,i)=>s+lineTotal(i),0)||0;
+  const vatAmt    = Math.round(subTotal*0.1);
+
+  return (
+    <div style={{ display:"flex",height:"calc(100vh - 56px)",overflow:"hidden",fontFamily:"'Inter','Segoe UI',sans-serif",position:"relative" }}>
+      {toast && <div style={{ position:"fixed",top:20,right:24,zIndex:2000,background:toast.type==="success"?T.green:T.orange,color:"#fff",padding:"10px 18px",borderRadius:8,fontSize:13,fontWeight:600 }}>{toast.msg}</div>}
+
+      {/* Quote list */}
+      <div style={{ width:300,flexShrink:0,borderRight:`1px solid ${T.border}`,display:"flex",flexDirection:"column",background:T.card }}>
+        <div style={{ padding:"12px 14px",borderBottom:`1px solid ${T.border}` }}>
+          <Input placeholder="Tìm báo giá..." value={search} onChange={e=>setSearch(e.target.value)} icon="🔍" />
+          <div style={{ display:"flex",gap:4,marginTop:8 }}>
+            {[["all","Tất cả"],["draft","Draft"],["assigned","Đã gán"],["approved","Duyệt"]].map(([k,l])=>(
+              <button key={k} onClick={()=>setFilterStatus(k)} style={{ flex:1,border:"none",cursor:"pointer",padding:"4px 4px",fontSize:9,fontWeight:filterStatus===k?700:400,background:filterStatus===k?T.green:T.bg,color:filterStatus===k?"#fff":T.textMid,borderRadius:4 }}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ flex:1,overflowY:"auto" }}>
+          {filtered.map(q=>{
+            const st = Q_STATUS[q.status]||Q_STATUS.draft;
+            const isSel = selectedQuote?.id===q.id;
+            return (
+              <div key={q.id} onClick={()=>{setSelectedQuote(q);setEditItems(null);}} style={{ padding:"12px 14px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:isSel?T.greenLight:"transparent",borderLeft:isSel?`3px solid ${T.green}`:"3px solid transparent" }}>
+                <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:3 }}>
+                  <span style={{ fontSize:11,fontFamily:"monospace",fontWeight:700,color:T.blue }}>{q.id}</span>
+                  <span style={{ fontSize:9,background:st.bg,color:st.color,padding:"1px 6px",borderRadius:8,fontWeight:700,marginLeft:"auto" }}>{st.icon} {st.label}</span>
+                </div>
+                <div style={{ fontSize:12,fontWeight:600,color:T.text,marginBottom:2 }}>{q.customer}</div>
+                <div style={{ fontSize:11,color:T.green,fontWeight:700 }}>{fmt(q.total)} đ</div>
+                {q.aiExtracted && <span style={{ fontSize:8,background:"#F0EDFF",color:"#5B21B6",padding:"1px 6px",borderRadius:4,marginTop:3,display:"inline-block" }}>🤖 AI extracted</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Quote detail */}
+      {q && (
+        <div style={{ flex:1,overflowY:"auto",padding:24,display:"flex",flexDirection:"column",gap:18 }}>
+          {/* Header */}
+          <div style={{ display:"flex",alignItems:"flex-start",gap:16 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:4 }}>
+                <div style={{ fontWeight:800,fontSize:20,color:T.text }}>{q.id}</div>
+                <span style={{ fontSize:11,background:Q_STATUS[q.status]?.bg,color:Q_STATUS[q.status]?.color,padding:"3px 10px",borderRadius:6,fontWeight:700 }}>{Q_STATUS[q.status]?.icon} {Q_STATUS[q.status]?.label}</span>
+                {q.aiExtracted && <span style={{ fontSize:10,background:"#F0EDFF",color:"#5B21B6",padding:"2px 8px",borderRadius:5,fontWeight:700 }}>🤖 AI Auto-extracted</span>}
+              </div>
+              <div style={{ fontSize:12,color:T.textLight }}>{q.customer} · {q.notes} · Tạo: {q.createdAt}</div>
+            </div>
+            <div style={{ display:"flex",gap:8 }}>
+              {q.status==="draft" && !editItems && <Btn variant="primary" onClick={()=>setEditItems([...q.items])}>✏️ Chỉnh sửa</Btn>}
+              {editItems && <>
+                <Btn variant="secondary" onClick={()=>setEditItems(null)}>Hủy</Btn>
+                <Btn variant="primary" onClick={()=>{ setQuotes(quotes.map(x=>x.id===q.id?{...x,items:editItems,total:subTotal,updatedAt:"Vừa xong"}:x)); setSelectedQuote({...q,items:editItems,total:subTotal}); setEditItems(null); showToast("Đã lưu báo giá"); }}>💾 Lưu</Btn>
+              </>}
+              {q.status==="draft" && !editItems && <Btn variant="secondary" onClick={()=>setAssignModal(q)}>👤 Gán Sales</Btn>}
+              {q.status==="draft" && !editItems && <Btn variant="secondary">📄 Xuất PDF</Btn>}
+            </div>
+          </div>
+
+          {/* Line items table */}
+          <Card style={{ overflow:"hidden" }}>
+            <div style={{ padding:"12px 18px",borderBottom:`1px solid ${T.border}`,fontWeight:700,fontSize:13,color:T.text,display:"flex",gap:10 }}>
+              Sản phẩm & Dịch vụ
+              {editItems && <Btn variant="secondary" size="sm" onClick={()=>setEditItems([...editItems,{sku:"",name:"",qty:1,unit:"m²",price:0,disc:0}])}>+ Thêm dòng</Btn>}
+            </div>
+            <table style={{ width:"100%",borderCollapse:"collapse" }}>
+              <thead>
+                <tr style={{ background:T.bg }}>
+                  {["SKU","Tên sản phẩm","SL","ĐVT","Đơn giá","CK%","Thành tiền",""].map(h=>(
+                    <th key={h} style={{ padding:"9px 14px",textAlign:"left",fontSize:10,fontWeight:700,color:T.textLight,letterSpacing:"0.05em",textTransform:"uppercase" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item,i)=>(
+                  <tr key={i} style={{ borderTop:`1px solid ${T.border}` }}>
+                    <td style={{ padding:"10px 14px" }}><span style={{ fontSize:10,fontFamily:"monospace",background:T.blueLight,color:T.blue,padding:"2px 6px",borderRadius:4 }}>{item.sku}</span></td>
+                    <td style={{ padding:"10px 14px" }}>
+                      {editItems
+                        ? <input value={item.name} onChange={e=>updateItem(i,"name",e.target.value)} style={{ border:`1px solid ${T.border}`,borderRadius:5,padding:"4px 8px",fontSize:12,width:"100%" }} />
+                        : <span style={{ fontSize:12,fontWeight:600,color:T.text }}>{item.name}</span>
+                      }
+                    </td>
+                    <td style={{ padding:"10px 14px" }}>
+                      {editItems
+                        ? <input type="number" value={item.qty} onChange={e=>updateItem(i,"qty",e.target.value)} style={{ border:`1px solid ${T.border}`,borderRadius:5,padding:"4px 6px",fontSize:12,width:64,textAlign:"center" }} />
+                        : <span style={{ fontSize:12,fontWeight:700,color:T.text }}>{item.qty}</span>
+                      }
+                    </td>
+                    <td style={{ padding:"10px 14px",fontSize:12,color:T.textMid }}>{item.unit}</td>
+                    <td style={{ padding:"10px 14px" }}>
+                      {editItems
+                        ? <input type="number" value={item.price} onChange={e=>updateItem(i,"price",e.target.value)} style={{ border:`1px solid ${T.border}`,borderRadius:5,padding:"4px 6px",fontSize:12,width:90,textAlign:"right" }} />
+                        : <span style={{ fontSize:12,color:T.text }}>{fmt(item.price)}</span>
+                      }
+                    </td>
+                    <td style={{ padding:"10px 14px" }}>
+                      {editItems
+                        ? <input type="number" value={item.disc} onChange={e=>updateItem(i,"disc",e.target.value)} style={{ border:`1px solid ${T.border}`,borderRadius:5,padding:"4px 6px",fontSize:12,width:50,textAlign:"center" }} />
+                        : <span style={{ fontSize:12,color:item.disc>0?T.orange:T.textMid }}>{item.disc}%</span>
+                      }
+                    </td>
+                    <td style={{ padding:"10px 14px",fontSize:13,fontWeight:700,color:T.green }}>{fmt(lineTotal(item))} đ</td>
+                    <td style={{ padding:"10px 14px" }}>
+                      {editItems && <Btn variant="danger" size="sm" onClick={()=>setEditItems(editItems.filter((_,j)=>j!==i))}>🗑</Btn>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* Totals */}
+            <div style={{ padding:"12px 18px",borderTop:`1px solid ${T.border}`,background:T.bg }}>
+              <div style={{ display:"flex",justifyContent:"flex-end" }}>
+                <div style={{ minWidth:260 }}>
+                  {[["Tạm tính",fmt(subTotal)+" đ"],["VAT 10%",fmt(vatAmt)+" đ"]].map(([k,v])=>(
+                    <div key={k} style={{ display:"flex",justifyContent:"space-between",fontSize:12,padding:"4px 0",borderBottom:`1px solid ${T.border}` }}>
+                      <span style={{ color:T.textMid }}>{k}</span><span style={{ color:T.text,fontWeight:600 }}>{v}</span>
+                    </div>
+                  ))}
+                  <div style={{ display:"flex",justifyContent:"space-between",fontSize:15,fontWeight:800,padding:"8px 0",color:T.green }}>
+                    <span>TỔNG CỘNG</span><span>{fmt(subTotal+vatAmt)} đ</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* State machine */}
+          <Card style={{ padding:18 }}>
+            <div style={{ fontWeight:700,fontSize:13,color:T.text,marginBottom:12 }}>Trạng thái & Lịch sử</div>
+            <div style={{ display:"flex",alignItems:"center",gap:0,marginBottom:14 }}>
+              {[["📝","Draft"],["👤","Assigned"],["✅","Approved"]].map(([ic,lb],i)=>{
+                const active = ["draft","assigned","approved"].indexOf(q.status)>=i;
+                return (
+                  <div key={lb} style={{ display:"flex",alignItems:"center" }}>
+                    <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:4 }}>
+                      <div style={{ width:32,height:32,borderRadius:"50%",background:active?T.green:T.border,color:active?"#fff":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>{ic}</div>
+                      <span style={{ fontSize:10,color:active?T.green:T.textLight,fontWeight:active?700:400 }}>{lb}</span>
+                    </div>
+                    {i<2 && <div style={{ width:60,height:2,background:active?T.green:T.border,marginBottom:14 }} />}
+                  </div>
+                );
+              })}
+            </div>
+            {[
+              { action:"AI tự động tạo draft", by:"AI System", at:q.createdAt },
+              { action:`Gán cho ${q.salesOwner||"Chưa gán"}`, by:"Admin", at:q.updatedAt },
+            ].map((h,i)=>(
+              <div key={i} style={{ display:"flex",gap:10,padding:"6px 0",borderBottom:`1px solid ${T.border}`,fontSize:11 }}>
+                <div style={{ width:3,background:T.green,borderRadius:2,flexShrink:0 }} />
+                <div>
+                  <span style={{ color:T.text,fontWeight:600 }}>{h.action}</span>
+                  <span style={{ color:T.textLight }}> · {h.by} · {h.at}</span>
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+
+      {/* Assign modal */}
+      {assignModal && (
+        <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,.45)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999 }}>
+          <Card style={{ width:380,padding:24 }}>
+            <div style={{ fontWeight:700,fontSize:15,color:T.text,marginBottom:14 }}>👤 Gán báo giá cho Sales</div>
+            <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+              {["nctruong@remak.vn","sales2@remak.vn","sales3@remak.vn"].map(s=>(
+                <div key={s} onClick={()=>{ setQuotes(quotes.map(q=>q.id===assignModal.id?{...q,salesOwner:s,status:"assigned"}:q)); setSelectedQuote({...assignModal,salesOwner:s,status:"assigned"}); setAssignModal(null); showToast(`Đã gán cho ${s}`); }}
+                  style={{ padding:"10px 14px",borderRadius:7,border:`1px solid ${T.border}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,background:T.bg }}>
+                  <Avatar name={s} size={28} bg={T.blue} />
+                  <span style={{ fontSize:12,fontWeight:600,color:T.text }}>{s}</span>
+                  <Btn variant="primary" size="sm" style={{ marginLeft:"auto" }}>Gán</Btn>
+                </div>
+              ))}
+            </div>
+            <Btn variant="secondary" size="sm" style={{ marginTop:12,width:"100%",justifyContent:"center" }} onClick={()=>setAssignModal(null)}>Hủy</Btn>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// E1/E2 – PROMPT CONFIG & AI MONITOR — FN1.4 / F2.3 / Agent Monitor
+// ════════════════════════════════════════════════════════════════════════════
+const PromptConfigPage = () => {
+  const [tab, setTab]                 = useState("prompts"); // prompts | guardrails | playground | monitor
+  const [activePrompt, setActivePrompt] = useState(null);
+  const [playInput, setPlayInput]     = useState("");
+  const [playOutput, setPlayOutput]   = useState(null);
+  const [playing, setPlaying]         = useState(false);
+  const [toast, setToast]             = useState(null);
+  const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),2500); };
+
+  const PROMPTS = [
+    { id:"P001", name:"System Prompt v3.2", agent:"Supervisor Agent", version:"3.2", status:"active",  updatedAt:"07/06/2026", tokens:412 },
+    { id:"P002", name:"Technical Agent Prompt", agent:"Technical Agent",  version:"2.1", status:"active",  updatedAt:"05/06/2026", tokens:280 },
+    { id:"P003", name:"Pricing Agent Prompt",   agent:"Pricing Agent",    version:"1.8", status:"active",  updatedAt:"03/06/2026", tokens:195 },
+    { id:"P004", name:"Fallback Policy v1.0",   agent:"All Agents",       version:"1.0", status:"draft",   updatedAt:"08/06/2026", tokens:89 },
+    { id:"P005", name:"Clarify Questions Set",  agent:"Supervisor Agent", version:"2.0", status:"active",  updatedAt:"01/06/2026", tokens:340 },
+  ];
+  const FEW_SHOTS = [
+    { id:1, input:"Tấm cách âm nào phù hợp cho nhà máy chế biến thực phẩm?", output:"Với nhà máy chế biến thực phẩm, Remak khuyến nghị Bông đá Stonewool cấp A1 (không bắt lửa) kết hợp tấm chống cháy B1...", quality:"good" },
+    { id:2, input:"So sánh NRC 0.85 và 0.65", output:"NRC (Noise Reduction Coefficient) 0.85 hấp thụ 85% âm thanh, còn 0.65 hấp thụ 65%. Sự chênh lệch 20% này rất đáng kể trong phòng thu...", quality:"good" },
+  ];
+  const AGENTS = [
+    { name:"Supervisor Agent", status:"healthy", latency:320,  calls:1247, errors:3,  tokens:28400 },
+    { name:"Technical Agent",  status:"healthy", latency:580,  calls:892,  errors:1,  tokens:42100 },
+    { name:"Pricing Agent",    status:"warning", latency:1240, calls:234,  errors:12, tokens:9800  },
+    { name:"Order Agent",      status:"healthy", latency:410,  calls:89,   errors:0,  tokens:6200  },
+    { name:"Chat Agent",       status:"healthy", latency:210,  calls:2341, errors:5,  tokens:15600 },
+  ];
+
+  const TabBtn = ({id,label,icon}) => (
+    <button onClick={()=>setTab(id)} style={{ border:"none",cursor:"pointer",fontWeight:tab===id?700:500,fontSize:13,padding:"10px 16px",borderBottom:tab===id?`2.5px solid ${T.green}`:"2.5px solid transparent",background:"transparent",color:tab===id?T.green:T.textMid,display:"flex",alignItems:"center",gap:6 }}>
+      {icon} {label}
+    </button>
+  );
+
+  return (
+    <div style={{ padding:28,fontFamily:"'Inter','Segoe UI',sans-serif",position:"relative" }}>
+      {toast && <div style={{ position:"fixed",top:20,right:24,zIndex:2000,background:toast.type==="success"?T.green:T.orange,color:"#fff",padding:"10px 18px",borderRadius:8,fontSize:13,fontWeight:600 }}>{toast.msg}</div>}
+
+      <Card>
+        <div style={{ borderBottom:`1px solid ${T.border}`,display:"flex",padding:"0 20px",gap:2,overflowX:"auto" }}>
+          <TabBtn id="prompts"    icon="📝" label="Prompt Store" />
+          <TabBtn id="fewshot"   icon="📚" label="Few-shot Library" />
+          <TabBtn id="guardrails" icon="🛡️" label="Guardrails" />
+          <TabBtn id="playground" icon="🧪" label="Playground" />
+          <TabBtn id="monitor"    icon="📊" label="Agent Monitor" />
+        </div>
+
+        {/* Prompt Store */}
+        {tab==="prompts" && (
+          <div style={{ display:"flex",minHeight:480 }}>
+            <div style={{ width:260,borderRight:`1px solid ${T.border}`,overflowY:"auto" }}>
+              <div style={{ padding:12,borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                <span style={{ fontSize:12,fontWeight:700,color:T.text }}>Prompts ({PROMPTS.length})</span>
+                <Btn variant="primary" size="sm">+ Mới</Btn>
+              </div>
+              {PROMPTS.map(p=>(
+                <div key={p.id} onClick={()=>setActivePrompt(p)} style={{ padding:"11px 14px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:activePrompt?.id===p.id?T.greenLight:"transparent",borderLeft:activePrompt?.id===p.id?`3px solid ${T.green}`:"3px solid transparent" }}>
+                  <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:3 }}>
+                    <span style={{ fontSize:12,fontWeight:600,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{p.name}</span>
+                    <span style={{ fontSize:9,background:p.status==="active"?T.greenLight:T.yellowLight,color:p.status==="active"?T.greenDark:"#92400E",padding:"1px 6px",borderRadius:4,fontWeight:700 }}>{p.status==="active"?"LIVE":"DRAFT"}</span>
+                  </div>
+                  <div style={{ fontSize:10,color:T.textLight }}>{p.agent} · v{p.version} · {p.tokens} tokens</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ flex:1,padding:22 }}>
+              {activePrompt ? (
+                <>
+                  <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16 }}>
+                    <div>
+                      <div style={{ fontWeight:800,fontSize:16,color:T.text }}>{activePrompt.name}</div>
+                      <div style={{ fontSize:11,color:T.textLight }}>Agent: {activePrompt.agent} · Version {activePrompt.version} · {activePrompt.updatedAt}</div>
+                    </div>
+                    <div style={{ marginLeft:"auto",display:"flex",gap:8 }}>
+                      <Btn variant="secondary" size="sm">📜 Lịch sử</Btn>
+                      <Btn variant="secondary" size="sm">↩ Rollback</Btn>
+                      <Btn variant="primary" size="sm">💾 Lưu v{parseFloat(activePrompt.version)+0.1}</Btn>
+                    </div>
+                  </div>
+                  <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:14 }}>
+                    <div>
+                      <div style={{ fontSize:11,fontWeight:700,color:T.textMid,marginBottom:6 }}>Phiên bản hiện tại (v{activePrompt.version})</div>
+                      <textarea defaultValue={`Bạn là trợ lý AI bán hàng của Remak Việt Nam, chuyên về vật liệu cách âm, cách nhiệt và chống cháy.\n\nNguyên tắc:\n1. Chỉ tư vấn dựa trên catalogue Remak được cung cấp\n2. Luôn trích dẫn nguồn thông tin\n3. Khi không chắc → handoff cho Sales\n4. Không tự bịa thông số kỹ thuật\n5. Giữ giọng điệu chuyên nghiệp, thân thiện`} rows={12}
+                        style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:7,padding:"10px 12px",fontSize:12,fontFamily:"monospace",resize:"vertical",outline:"none",boxSizing:"border-box" }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize:11,fontWeight:700,color:T.textMid,marginBottom:6 }}>Version diff (v{parseFloat(activePrompt.version)-0.1} → v{activePrompt.version})</div>
+                      <div style={{ background:"#1a1a2e",borderRadius:7,padding:14,height:230,overflowY:"auto",fontFamily:"monospace",fontSize:11 }}>
+                        {[
+                          { type:"same",  text:"Bạn là trợ lý AI bán hàng của Remak..." },
+                          { type:"del",   text:"- Không tư vấn ngoài giờ hành chính" },
+                          { type:"add",   text:"+ Hỗ trợ 24/7 qua Web Widget và Zalo" },
+                          { type:"same",  text:"Luôn trích dẫn nguồn thông tin..." },
+                          { type:"add",   text:"+ Khi giá > 50tr → thông báo lên Sales Manager" },
+                        ].map((l,i)=>(
+                          <div key={i} style={{ color:l.type==="add"?"#4ADE80":l.type==="del"?"#F87171":"#94A3B8",marginBottom:2 }}>{l.text}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding:40,textAlign:"center",color:T.textLight }}>
+                  <div style={{ fontSize:32,marginBottom:8 }}>📝</div>
+                  <div style={{ fontSize:13 }}>Chọn một prompt để chỉnh sửa</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Few-shot Library */}
+        {tab==="fewshot" && (
+          <div style={{ padding:22,display:"flex",flexDirection:"column",gap:14 }}>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+              <div style={{ fontSize:13,color:T.textMid }}>Few-shot examples inject vào prompt để hướng dẫn AI. <b>{FEW_SHOTS.length}</b> examples đang active.</div>
+              <Btn variant="primary" size="sm">+ Thêm example</Btn>
+            </div>
+            {FEW_SHOTS.map(f=>(
+              <Card key={f.id} style={{ padding:16 }}>
+                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:12 }}>
+                  <div>
+                    <div style={{ fontSize:10,fontWeight:700,color:T.textLight,marginBottom:4,letterSpacing:"0.06em" }}>USER INPUT</div>
+                    <div style={{ background:"#DCF8C6",borderRadius:8,padding:10,fontSize:12,color:T.text }}>{f.input}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:10,fontWeight:700,color:T.textLight,marginBottom:4,letterSpacing:"0.06em" }}>AI OUTPUT (EXPECTED)</div>
+                    <div style={{ background:T.card,border:`1px solid ${T.border}`,borderRadius:8,padding:10,fontSize:12,color:T.text }}>{f.output}</div>
+                  </div>
+                </div>
+                <div style={{ display:"flex",gap:8,alignItems:"center" }}>
+                  <span style={{ fontSize:10,background:T.greenLight,color:T.greenDark,padding:"2px 8px",borderRadius:4,fontWeight:700 }}>✅ Good example</span>
+                  <div style={{ marginLeft:"auto",display:"flex",gap:5 }}>
+                    <Btn variant="secondary" size="sm">✏️ Sửa</Btn>
+                    <Btn variant="danger" size="sm">🗑️</Btn>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Guardrails */}
+        {tab==="guardrails" && (
+          <div style={{ padding:22,display:"flex",flexDirection:"column",gap:16 }}>
+            {[
+              { title:"Confidence Threshold", desc:"AI handoff khi confidence thấp hơn ngưỡng", value:"0.70", type:"slider", min:0, max:1 },
+              { title:"Max tokens per response", desc:"Giới hạn độ dài câu trả lời", value:"800", type:"number" },
+              { title:"Blocked topics", desc:"Từ chối trả lời các chủ đề này", value:"chính trị, tôn giáo, cạnh tranh đối thủ", type:"text" },
+              { title:"Fallback message", desc:"Tin nhắn khi AI không trả lời được", value:"Xin lỗi, tôi cần chuyển câu hỏi này cho nhân viên tư vấn. Vui lòng chờ trong giây lát!", type:"textarea" },
+              { title:"PII Auto-masking", desc:"Tự động che SĐT, email trong log", value:true, type:"toggle" },
+              { title:"Rate limit (msg/min/user)", desc:"Giới hạn tin nhắn mỗi phút", value:"20", type:"number" },
+            ].map(r=>(
+              <div key={r.title} style={{ display:"grid",gridTemplateColumns:"1fr 2fr",gap:16,padding:"14px 0",borderBottom:`1px solid ${T.border}`,alignItems:"center" }}>
+                <div>
+                  <div style={{ fontSize:13,fontWeight:600,color:T.text }}>{r.title}</div>
+                  <div style={{ fontSize:11,color:T.textLight,marginTop:2 }}>{r.desc}</div>
+                </div>
+                <div>
+                  {r.type==="toggle"
+                    ? <div onClick={()=>{}} style={{ width:44,height:24,borderRadius:12,background:r.value?T.green:T.border,cursor:"pointer",position:"relative" }}>
+                        <div style={{ width:20,height:20,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:r.value?22:2,transition:"left .2s" }} />
+                      </div>
+                    : r.type==="textarea"
+                    ? <textarea defaultValue={r.value} rows={2} style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:6,padding:"6px 10px",fontSize:12,resize:"none",outline:"none",boxSizing:"border-box" }} />
+                    : <input defaultValue={r.value} type={r.type==="number"?"number":"text"}
+                        style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:6,padding:"7px 10px",fontSize:12,outline:"none",boxSizing:"border-box" }} />
+                  }
+                </div>
+              </div>
+            ))}
+            <Btn variant="primary" style={{ alignSelf:"flex-start" }} onClick={()=>showToast("Guardrails đã lưu và áp dụng")}>💾 Lưu cấu hình</Btn>
+          </div>
+        )}
+
+        {/* Playground */}
+        {tab==="playground" && (
+          <div style={{ padding:22,display:"flex",flexDirection:"column",gap:16 }}>
+            <div style={{ background:T.blueLight,border:`1px solid #BFDBFE`,borderRadius:8,padding:12,fontSize:12,color:T.blue }}>
+              🧪 Test prompt với dữ liệu thực. Kết quả không lưu vào KB hay hội thoại thật.
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16 }}>
+              <div>
+                <label style={{ fontSize:12,fontWeight:600,color:T.textMid,display:"block",marginBottom:6 }}>Agent</label>
+                <select style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 10px",fontSize:12 }}>
+                  {AGENTS.map(a=><option key={a.name}>{a.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize:12,fontWeight:600,color:T.textMid,display:"block",marginBottom:6 }}>Prompt version</label>
+                <select style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 10px",fontSize:12 }}>
+                  <option>v3.2 (active)</option><option>v3.1</option><option>v3.0</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize:12,fontWeight:600,color:T.textMid,display:"block",marginBottom:6 }}>Test input</label>
+              <textarea value={playInput} onChange={e=>setPlayInput(e.target.value)} placeholder="Nhập câu hỏi test..." rows={3}
+                style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 12px",fontSize:13,resize:"none",outline:"none",boxSizing:"border-box" }} />
+            </div>
+            <Btn variant="primary" disabled={!playInput||playing} style={{ alignSelf:"flex-start" }}
+              onClick={()=>{ setPlaying(true); setTimeout(()=>{ setPlayInput(playInput); setPlayOutput({ text:"Với yêu cầu của bạn, Remak khuyến nghị giải pháp **Bông đá Stonewool 50mm** (NRC=0.70, STC=28). Đây là vật liệu cách âm cao cấp phù hợp cho nhà xưởng công nghiệp với tiêu chuẩn chống cháy Class A1.\n\nGiá tham khảo: 45,000 VND/m² (chưa VAT)", confidence:0.91, agent:"Technical Agent", tokens:287, latency:420 }); setPlaying(false); },1200); }}>
+              {playing?"⏳ Đang xử lý...":"▶ Chạy test"}
+            </Btn>
+            {playOutput && (
+              <Card style={{ padding:18 }}>
+                <div style={{ display:"flex",gap:12,marginBottom:12 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:10,fontWeight:700,color:T.textLight,marginBottom:4,letterSpacing:"0.06em" }}>AI RESPONSE</div>
+                    <div style={{ fontSize:13,color:T.text,lineHeight:1.7,whiteSpace:"pre-line" }}>{playOutput.text}</div>
+                  </div>
+                </div>
+                <div style={{ display:"flex",gap:16,paddingTop:12,borderTop:`1px solid ${T.border}` }}>
+                  {[["Confidence",`${Math.round(playOutput.confidence*100)}%`],["Agent",playOutput.agent],["Tokens",playOutput.tokens],["Latency",`${playOutput.latency}ms`]].map(([k,v])=>(
+                    <div key={k} style={{ textAlign:"center" }}>
+                      <div style={{ fontSize:10,color:T.textLight }}>{k}</div>
+                      <div style={{ fontSize:13,fontWeight:700,color:T.green }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Agent Monitor */}
+        {tab==="monitor" && (
+          <div style={{ padding:22,display:"flex",flexDirection:"column",gap:16 }}>
+            <div style={{ display:"flex",gap:14 }}>
+              {[["Tổng calls/giờ","4803","↑12%",T.green],["Avg latency","452ms","↑8%",T.yellow],["Error rate","0.43%","↓2%",T.green],["Token usage","102K","↑5%",T.blue]].map(([l,v,d,c])=>(
+                <StatCard key={l} label={l} value={v} color={c} sub={d} />
+              ))}
+            </div>
+            <table style={{ width:"100%",borderCollapse:"collapse" }}>
+              <thead>
+                <tr style={{ background:T.bg }}>
+                  {["Agent","Status","Avg Latency","Calls (24h)","Errors","Tokens (24h)","Hành động"].map(h=>(
+                    <th key={h} style={{ padding:"9px 14px",textAlign:"left",fontSize:10,fontWeight:700,color:T.textLight,letterSpacing:"0.05em",textTransform:"uppercase" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {AGENTS.map((a,i)=>(
+                  <tr key={a.name} style={{ borderTop:`1px solid ${T.border}`,background:i%2===0?T.card:"rgba(244,246,243,.4)" }}>
+                    <td style={{ padding:"11px 14px",fontWeight:600,fontSize:13,color:T.text }}>{a.name}</td>
+                    <td style={{ padding:"11px 14px" }}>
+                      <span style={{ fontSize:10,fontWeight:700,background:a.status==="healthy"?T.greenLight:T.yellowLight,color:a.status==="healthy"?T.greenDark:"#92400E",padding:"2px 8px",borderRadius:5 }}>
+                        {a.status==="healthy"?"● Healthy":"⚠ Warning"}
+                      </span>
+                    </td>
+                    <td style={{ padding:"11px 14px",fontSize:12,color:a.latency>1000?T.orange:T.textMid,fontWeight:a.latency>1000?700:400 }}>{a.latency}ms</td>
+                    <td style={{ padding:"11px 14px",fontSize:12,color:T.text,fontWeight:700 }}>{a.calls.toLocaleString()}</td>
+                    <td style={{ padding:"11px 14px",fontSize:12,color:a.errors>5?T.red:T.textMid,fontWeight:a.errors>5?700:400 }}>{a.errors}</td>
+                    <td style={{ padding:"11px 14px",fontSize:12,color:T.textMid }}>{a.tokens.toLocaleString()}</td>
+                    <td style={{ padding:"11px 14px" }}><Btn variant="secondary" size="sm">📊 Detail</Btn></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// E6 – ROUTING RULES BUILDER — FN6.1 / FN6.2
+// ════════════════════════════════════════════════════════════════════════════
+const RoutingRulesPage = () => {
+  const [rules, setRules] = useState([
+    { id:1, name:"Enterprise ≥ 50 triệu", condition:"total >= 50000000", action:"assign_group:sales_senior", priority:1, active:true,  hits:42 },
+    { id:2, name:"Medium 10–50 triệu",    condition:"total >= 10000000 AND total < 50000000", action:"assign_group:sales_standard", priority:2, active:true,  hits:187 },
+    { id:3, name:"Retail < 10 triệu",     condition:"total < 10000000", action:"assign_group:sales_junior", priority:3, active:true,  hits:521 },
+    { id:4, name:"Fallback mặc định",     condition:"*", action:"assign_user:nctruong@remak.vn", priority:99, active:true,  hits:8 },
+  ]);
+  const [notifyTemplates, setNotifyTemplates] = useState([
+    { id:1, event:"quote_assigned",   channel:"zalo_oa", template:"📋 Báo giá {quote_id} vừa được gán cho bạn. Khách: {customer}. Giá trị: {total}đ", active:true },
+    { id:2, event:"handoff_cs",       channel:"in_app",  template:"🔔 Hội thoại {conv_id} cần CS xử lý. Khách {visitor} chờ phản hồi.", active:true },
+    { id:3, event:"quote_unassigned", channel:"email",   template:"⚠️ Báo giá {quote_id} chưa được xử lý sau 2 giờ.", active:false },
+  ]);
+  const [showAddRule, setShowAddRule] = useState(false);
+  const [newRule, setNewRule] = useState({ name:"",condition:"",action:"assign_group:sales_standard",priority:10 });
+  const [tab, setTab] = useState("rules"); // rules | notify
+  const [toast, setToast] = useState(null);
+  const showToast = (msg,type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),2500); };
+
+  const TabBtn = ({id,label,icon}) => (
+    <button onClick={()=>setTab(id)} style={{ border:"none",cursor:"pointer",fontWeight:tab===id?700:500,fontSize:13,padding:"10px 16px",borderBottom:tab===id?`2.5px solid ${T.green}`:"2.5px solid transparent",background:"transparent",color:tab===id?T.green:T.textMid,display:"flex",alignItems:"center",gap:6 }}>
+      {icon} {label}
+    </button>
+  );
+
+  return (
+    <div style={{ padding:28,fontFamily:"'Inter','Segoe UI',sans-serif",position:"relative" }}>
+      {toast && <div style={{ position:"fixed",top:20,right:24,zIndex:2000,background:toast.type==="success"?T.green:T.orange,color:"#fff",padding:"10px 18px",borderRadius:8,fontSize:13,fontWeight:600 }}>{toast.msg}</div>}
+
+      <div style={{ display:"flex",gap:14,marginBottom:22 }}>
+        <StatCard label="Rules active"     value={rules.filter(r=>r.active).length} color={T.green} />
+        <StatCard label="Tổng hits (24h)"  value={rules.reduce((s,r)=>s+r.hits,0)} color={T.blue} />
+        <StatCard label="Fallback hits"    value={rules.find(r=>r.priority===99)?.hits||0} color={T.orange} sub="Cần thêm rule?" />
+        <StatCard label="Notify templates" value={notifyTemplates.filter(n=>n.active).length} color={T.text} />
+      </div>
+
+      <Card>
+        <div style={{ borderBottom:`1px solid ${T.border}`,display:"flex",padding:"0 20px" }}>
+          <TabBtn id="rules"  icon="⚙️" label="Routing Rules" />
+          <TabBtn id="notify" icon="🔔" label="Notification Templates" />
+        </div>
+
+        {/* Rules tab */}
+        {tab==="rules" && (
+          <div style={{ padding:22 }}>
+            <div style={{ background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:8,padding:12,fontSize:12,color:T.blue,marginBottom:16 }}>
+              ⚡ Rules được đánh giá theo thứ tự Priority. Rule đầu tiên match sẽ được áp dụng. Fallback (Priority 99) luôn ở cuối cùng.
+            </div>
+
+            <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:14 }}>
+              <Btn variant="primary" onClick={()=>setShowAddRule(true)}>+ Thêm rule</Btn>
+            </div>
+
+            <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+              {rules.sort((a,b)=>a.priority-b.priority).map(rule=>(
+                <div key={rule.id} style={{ padding:16,borderRadius:8,border:`1px solid ${rule.active?T.green:T.border}`,background:rule.active?"#F0FDF4":T.bg,display:"flex",alignItems:"center",gap:16 }}>
+                  <div style={{ width:32,height:32,borderRadius:6,background:rule.active?T.green:T.border,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0 }}>
+                    {rule.priority===99?"★":rule.priority}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4 }}>
+                      <span style={{ fontSize:13,fontWeight:700,color:T.text }}>{rule.name}</span>
+                      {rule.priority===99 && <span style={{ fontSize:9,background:T.yellowLight,color:"#92400E",padding:"1px 6px",borderRadius:4,fontWeight:700 }}>FALLBACK</span>}
+                    </div>
+                    <div style={{ display:"flex",gap:10,fontSize:11,flexWrap:"wrap" }}>
+                      <div style={{ background:"#F8F0FF",border:"1px solid #E9D5FF",borderRadius:5,padding:"3px 10px",color:"#6D28D9",fontFamily:"monospace" }}>
+                        IF: {rule.condition}
+                      </div>
+                      <div style={{ background:T.greenLight,border:`1px solid ${T.greenMid}`,borderRadius:5,padding:"3px 10px",color:T.greenDark,fontFamily:"monospace" }}>
+                        → {rule.action}
+                      </div>
+                      <div style={{ background:T.blueLight,border:"1px solid #BFDBFE",borderRadius:5,padding:"3px 10px",color:T.blue }}>
+                        {rule.hits} hits hôm nay
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display:"flex",gap:6,flexShrink:0 }}>
+                    <div onClick={()=>{ setRules(rules.map(r=>r.id===rule.id?{...r,active:!r.active}:r)); showToast(`Rule "${rule.name}" ${rule.active?"tắt":"bật"}`); }}
+                      style={{ width:40,height:22,borderRadius:11,background:rule.active?T.green:T.border,cursor:"pointer",position:"relative",transition:"background .2s" }}>
+                      <div style={{ width:18,height:18,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:rule.active?20:2,transition:"left .2s" }} />
+                    </div>
+                    <Btn variant="secondary" size="sm">✏️</Btn>
+                    <Btn variant="danger" size="sm" onClick={()=>{ setRules(rules.filter(r=>r.id!==rule.id)); showToast("Đã xóa rule","info"); }}>🗑️</Btn>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {showAddRule && (
+              <Card style={{ marginTop:16,padding:18,border:`1px solid ${T.green}` }}>
+                <div style={{ fontWeight:700,fontSize:13,color:T.text,marginBottom:14 }}>+ Thêm routing rule mới</div>
+                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14 }}>
+                  <div>
+                    <label style={{ fontSize:11,fontWeight:600,color:T.textMid,display:"block",marginBottom:4 }}>Tên rule *</label>
+                    <Input value={newRule.name} onChange={e=>setNewRule({...newRule,name:e.target.value})} placeholder="VD: Đơn hàng lớn ≥ 100 triệu" />
+                  </div>
+                  <div>
+                    <label style={{ fontSize:11,fontWeight:600,color:T.textMid,display:"block",marginBottom:4 }}>Priority (thấp hơn = ưu tiên cao hơn)</label>
+                    <input type="number" value={newRule.priority} onChange={e=>setNewRule({...newRule,priority:Number(e.target.value)})}
+                      style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 10px",fontSize:12,boxSizing:"border-box" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize:11,fontWeight:600,color:T.textMid,display:"block",marginBottom:4 }}>Điều kiện (IF)</label>
+                    <Input value={newRule.condition} onChange={e=>setNewRule({...newRule,condition:e.target.value})} placeholder="total >= 100000000" />
+                  </div>
+                  <div>
+                    <label style={{ fontSize:11,fontWeight:600,color:T.textMid,display:"block",marginBottom:4 }}>Hành động (THEN)</label>
+                    <select value={newRule.action} onChange={e=>setNewRule({...newRule,action:e.target.value})} style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 10px",fontSize:12 }}>
+                      <option value="assign_group:sales_senior">Gán nhóm: Sales Senior</option>
+                      <option value="assign_group:sales_standard">Gán nhóm: Sales Standard</option>
+                      <option value="assign_group:sales_junior">Gán nhóm: Sales Junior</option>
+                      <option value="assign_user:nctruong@remak.vn">Gán user: nctruong@remak.vn</option>
+                      <option value="notify_manager">Thông báo Manager</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display:"flex",gap:8,justifyContent:"flex-end" }}>
+                  <Btn variant="secondary" onClick={()=>setShowAddRule(false)}>Hủy</Btn>
+                  <Btn variant="primary" disabled={!newRule.name||!newRule.condition} onClick={()=>{ setRules([...rules,{...newRule,id:Date.now(),active:true,hits:0}]); setShowAddRule(false); setNewRule({name:"",condition:"",action:"assign_group:sales_standard",priority:10}); showToast("Đã thêm rule mới"); }}>Lưu rule</Btn>
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Notify templates */}
+        {tab==="notify" && (
+          <div style={{ padding:22,display:"flex",flexDirection:"column",gap:12 }}>
+            {notifyTemplates.map(n=>(
+              <Card key={n.id} style={{ padding:16 }}>
+                <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:8 }}>
+                  <span style={{ fontSize:11,fontWeight:700,background:T.blueLight,color:T.blue,padding:"2px 8px",borderRadius:5 }}>{n.event}</span>
+                  <span style={{ fontSize:10,background:n.channel==="zalo_oa"?"#ECFEFF":n.channel==="email"?T.blueLight:T.greenLight,color:n.channel==="zalo_oa"?"#0E7490":n.channel==="email"?T.blue:T.greenDark,padding:"2px 8px",borderRadius:5 }}>
+                    {n.channel==="zalo_oa"?"💙 Zalo OA":n.channel==="email"?"📧 Email":"🔔 In-App"}
+                  </span>
+                  <div onClick={()=>setNotifyTemplates(notifyTemplates.map(x=>x.id===n.id?{...x,active:!x.active}:x))}
+                    style={{ marginLeft:"auto",width:40,height:22,borderRadius:11,background:n.active?T.green:T.border,cursor:"pointer",position:"relative" }}>
+                    <div style={{ width:18,height:18,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:n.active?20:2,transition:"left .2s" }} />
+                  </div>
+                </div>
+                <textarea defaultValue={n.template} rows={2} style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:6,padding:"6px 10px",fontSize:12,fontFamily:"monospace",resize:"none",outline:"none",boxSizing:"border-box" }} />
+                <div style={{ fontSize:10,color:T.textLight,marginTop:4 }}>Variables: {"{quote_id} {customer} {total} {conv_id} {visitor} {agent}"}</div>
+              </Card>
+            ))}
+            <Btn variant="primary" style={{ alignSelf:"flex-start" }} onClick={()=>showToast("Templates đã lưu")}>💾 Lưu templates</Btn>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// E8 – AUDIT LOG — FN8.1 / FN8.2
+// ════════════════════════════════════════════════════════════════════════════
+const AuditLogPage = () => {
+  const [tab, setTab]             = useState("audit");
+  const [search, setSearch]       = useState("");
+  const [filterModule, setFilterModule] = useState("all");
+  const [filterUser, setFilterUser]     = useState("all");
+  const [dateFrom, setDateFrom]   = useState("");
+
+  const AUDIT_LOGS = [
+    { id:1, ts:"08/06/2026 10:45:23", user:"admin@remak.vn",    module:"KB",    action:"DELETE",  target:"Fire_Rating_Standards.docx", ip:"192.168.1.10", result:"success" },
+    { id:2, ts:"08/06/2026 09:30:11", user:"trainer@remak.vn",  module:"KB",    action:"APPROVE", target:"Stonewool_Brochure_v3.pdf (NCC)",ip:"192.168.1.22", result:"success" },
+    { id:3, ts:"08/06/2026 09:12:05", user:"AI System",          module:"Quote", action:"CREATE",  target:"Q-2026-042 (AI auto)",        ip:"internal",    result:"success" },
+    { id:4, ts:"08/06/2026 08:55:00", user:"nctruong@remak.vn",  module:"Quote", action:"ASSIGN",  target:"Q-2026-041 → nctruong",       ip:"192.168.1.31", result:"success" },
+    { id:5, ts:"08/06/2026 08:30:17", user:"sales2@remak.vn",    module:"RBAC",  action:"ACCESS_DENIED","target":"/admin/users",              ip:"192.168.1.45", result:"blocked" },
+    { id:6, ts:"07/06/2026 17:20:44", user:"admin@remak.vn",     module:"User",  action:"CREATE",  target:"ncc@remak.vn (role: NCC)",    ip:"192.168.1.10", result:"success" },
+    { id:7, ts:"07/06/2026 16:11:09", user:"trainer@remak.vn",   module:"Prompt","action":"UPDATE",  target:"System Prompt v3.2",          ip:"192.168.1.22", result:"success" },
+    { id:8, ts:"07/06/2026 14:05:33", user:"admin@remak.vn",     module:"RBAC",  action:"ROLE_CHANGE","target":"multi@remak.vn: [sales] → [sales,trainer]", ip:"192.168.1.10", result:"success" },
+  ];
+
+  const PII_LOGS = [
+    { ts:"08/06/2026 10:45", source:"Chat C002", detected:"SĐT: 0912***678, Email: t***@gmail.com", masked:true },
+    { ts:"08/06/2026 09:12", source:"Chat C001", detected:"SĐT: 0901***567",                        masked:true },
+    { ts:"07/06/2026 14:20", source:"Chat C004", detected:"CMND: 079***1234, SĐT: 0956***012",     masked:true },
+  ];
+
+  const modules = ["all","KB","Quote","User","RBAC","Prompt","AI"];
+  const users   = ["all","admin@remak.vn","trainer@remak.vn","nctruong@remak.vn","AI System"];
+
+  const filtered = AUDIT_LOGS.filter(l => {
+    const mM = filterModule==="all"||l.module===filterModule;
+    const mU = filterUser==="all"||l.user===filterUser;
+    const mQ = l.target.toLowerCase().includes(search.toLowerCase())||l.action.toLowerCase().includes(search.toLowerCase());
+    return mM && mU && mQ;
+  });
+
+  const TabBtn = ({id,label,icon}) => (
+    <button onClick={()=>setTab(id)} style={{ border:"none",cursor:"pointer",fontWeight:tab===id?700:500,fontSize:13,padding:"10px 16px",borderBottom:tab===id?`2.5px solid ${T.green}`:"2.5px solid transparent",background:"transparent",color:tab===id?T.green:T.textMid,display:"flex",alignItems:"center",gap:6 }}>
+      {icon} {label}
+    </button>
+  );
+
+  return (
+    <div style={{ padding:28,fontFamily:"'Inter','Segoe UI',sans-serif" }}>
+      <div style={{ display:"flex",gap:14,marginBottom:22 }}>
+        <StatCard label="Tổng log (90 ngày)" value="12,847" color={T.text} />
+        <StatCard label="Access denied"       value="23"     color={T.orange} sub="Hôm nay" />
+        <StatCard label="PII masked"          value="142"    color={T.blue} sub="7 ngày qua" />
+        <StatCard label="KB changes"          value="38"     color={T.green} sub="Tháng này" />
+      </div>
+
+      <Card>
+        <div style={{ borderBottom:`1px solid ${T.border}`,display:"flex",padding:"0 20px" }}>
+          <TabBtn id="audit" icon="📜" label="Audit Log" />
+          <TabBtn id="pii"   icon="🔒" label="PII Masking Log" />
+        </div>
+
+        {tab==="audit" && (
+          <>
+            <div style={{ padding:"12px 20px",borderBottom:`1px solid ${T.border}`,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center" }}>
+              <Input placeholder="Tìm action, target..." value={search} onChange={e=>setSearch(e.target.value)} icon="🔍" style={{ width:220 }} />
+              <select value={filterModule} onChange={e=>setFilterModule(e.target.value)} style={{ border:`1px solid ${T.border}`,borderRadius:7,padding:"7px 10px",fontSize:12,color:T.text,background:T.card }}>
+                {modules.map(m=><option key={m} value={m}>{m==="all"?"Tất cả module":m}</option>)}
+              </select>
+              <select value={filterUser} onChange={e=>setFilterUser(e.target.value)} style={{ border:`1px solid ${T.border}`,borderRadius:7,padding:"7px 10px",fontSize:12,color:T.text,background:T.card }}>
+                {users.map(u=><option key={u} value={u}>{u==="all"?"Tất cả users":u}</option>)}
+              </select>
+              <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{ border:`1px solid ${T.border}`,borderRadius:7,padding:"7px 10px",fontSize:12,color:T.text,background:T.card }} />
+              <span style={{ fontSize:11,color:T.textLight,marginLeft:"auto" }}>{filtered.length} records · Retention: 90 ngày</span>
+              <Btn variant="secondary" size="sm">📥 Export CSV</Btn>
+            </div>
+            <div style={{ overflowX:"auto" }}>
+              <table style={{ width:"100%",borderCollapse:"collapse",minWidth:820 }}>
+                <thead>
+                  <tr style={{ background:T.bg }}>
+                    {["Thời gian","Người dùng","Module","Action","Đối tượng","IP","Kết quả"].map(h=>(
+                      <th key={h} style={{ padding:"9px 14px",textAlign:"left",fontSize:10,fontWeight:700,color:T.textLight,letterSpacing:"0.05em",textTransform:"uppercase",whiteSpace:"nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((l,i)=>(
+                    <tr key={l.id} style={{ borderTop:`1px solid ${T.border}`,background:l.result==="blocked"?T.redLight:i%2===0?T.card:"rgba(244,246,243,.4)" }}>
+                      <td style={{ padding:"9px 14px",fontSize:11,fontFamily:"monospace",color:T.textMid,whiteSpace:"nowrap" }}>{l.ts}</td>
+                      <td style={{ padding:"9px 14px",fontSize:11,color:T.text,fontWeight:l.user==="AI System"?700:400 }}>{l.user}</td>
+                      <td style={{ padding:"9px 14px" }}><span style={{ fontSize:10,fontWeight:700,background:T.blueLight,color:T.blue,padding:"2px 7px",borderRadius:4 }}>{l.module}</span></td>
+                      <td style={{ padding:"9px 14px" }}>
+                        <span style={{ fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:4,
+                          background:l.action==="DELETE"||l.action==="ACCESS_DENIED"?T.redLight:l.action==="CREATE"||l.action==="APPROVE"?T.greenLight:T.yellowLight,
+                          color:l.action==="DELETE"||l.action==="ACCESS_DENIED"?T.red:l.action==="CREATE"||l.action==="APPROVE"?T.greenDark:"#92400E"
+                        }}>{l.action}</span>
+                      </td>
+                      <td style={{ padding:"9px 14px",fontSize:11,color:T.textMid,maxWidth:240,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }} title={l.target}>{l.target}</td>
+                      <td style={{ padding:"9px 14px",fontSize:10,fontFamily:"monospace",color:T.textLight }}>{l.ip}</td>
+                      <td style={{ padding:"9px 14px" }}>
+                        <span style={{ fontSize:10,fontWeight:700,background:l.result==="success"?T.greenLight:T.redLight,color:l.result==="success"?T.greenDark:T.red,padding:"2px 7px",borderRadius:4 }}>
+                          {l.result==="success"?"✅ OK":"🚫 Blocked"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ padding:"10px 20px",fontSize:11,color:T.textLight }}>Hiển thị {filtered.length}/{AUDIT_LOGS.length} records</div>
+          </>
+        )}
+
+        {tab==="pii" && (
+          <div style={{ padding:22 }}>
+            <div style={{ background:T.greenLight,border:`1px solid ${T.greenMid}`,borderRadius:8,padding:12,fontSize:12,color:T.greenDark,marginBottom:16 }}>
+              ✅ PII auto-masking đang hoạt động. Tất cả SĐT/email/CMND trong log và API response được che tự động theo regex pattern.
+            </div>
+            <table style={{ width:"100%",borderCollapse:"collapse" }}>
+              <thead>
+                <tr style={{ background:T.bg }}>
+                  {["Thời gian","Nguồn","PII phát hiện (đã mask)","Kết quả"].map(h=>(
+                    <th key={h} style={{ padding:"9px 14px",textAlign:"left",fontSize:10,fontWeight:700,color:T.textLight,letterSpacing:"0.05em",textTransform:"uppercase" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {PII_LOGS.map((l,i)=>(
+                  <tr key={i} style={{ borderTop:`1px solid ${T.border}`,background:i%2===0?T.card:"rgba(244,246,243,.4)" }}>
+                    <td style={{ padding:"9px 14px",fontSize:11,color:T.textMid }}>{l.ts}</td>
+                    <td style={{ padding:"9px 14px",fontSize:11,color:T.blue }}>{l.source}</td>
+                    <td style={{ padding:"9px 14px",fontSize:11,fontFamily:"monospace",color:T.text }}>{l.detected}</td>
+                    <td style={{ padding:"9px 14px" }}>
+                      <span style={{ fontSize:10,fontWeight:700,background:T.greenLight,color:T.greenDark,padding:"2px 8px",borderRadius:4 }}>🔒 Masked</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// E7 – CHANNEL INTEGRATION — FN7.1 (Widget) + FN7.2 (Zalo OA)
+// ════════════════════════════════════════════════════════════════════════════
+const ChannelConfigPage = () => {
+  const [tab, setTab]         = useState("widget");
+  const [toast, setToast]     = useState(null);
+  const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),2500); };
+  // Widget config state
+  const [widgetCfg, setWidgetCfg] = useState({
+    primaryColor: "#6DB02B", position:"bottom-right",
+    greeting:"Xin chào! Tôi là trợ lý AI của Remak. Bạn cần tư vấn gì?",
+    placeholder:"Nhập câu hỏi của bạn...",
+    showBranding:true, collectName:true, collectPhone:false,
+    autoOpen:false, openDelay:3,
+  });
+  // Zalo config
+  const [zaloCfg, setZaloCfg] = useState({
+    oaId:"", appId:"", appSecret:"", webhookSecret:"",
+    webhookUrl:"https://api.remak-chat.vn/webhook/zalo",
+    connected:true, lastSync:"08/06/2026 09:00",
+  });
+
+  const widgetCode = `<script>
+  window.RemakChatConfig = {
+    apiKey: "rck_prod_xxxxxxxxxx",
+    primaryColor: "${widgetCfg.primaryColor}",
+    position: "${widgetCfg.position}",
+    greeting: "${widgetCfg.greeting}",
+  };
+</script>
+<script async src="https://cdn.remak-chat.vn/widget.js"></script>`;
+
+  const TabBtn = ({id,label,icon}) => (
+    <button onClick={()=>setTab(id)} style={{ border:"none",cursor:"pointer",fontWeight:tab===id?700:500,fontSize:13,padding:"10px 16px",borderBottom:tab===id?`2.5px solid ${T.green}`:"2.5px solid transparent",background:"transparent",color:tab===id?T.green:T.textMid,display:"flex",alignItems:"center",gap:6 }}>
+      {icon} {label}
+    </button>
+  );
+
+  return (
+    <div style={{ padding:28,fontFamily:"'Inter','Segoe UI',sans-serif",position:"relative" }}>
+      {toast && <div style={{ position:"fixed",top:20,right:24,zIndex:2000,background:toast.type==="success"?T.green:T.orange,color:"#fff",padding:"10px 18px",borderRadius:8,fontSize:13,fontWeight:600 }}>{toast.msg}</div>}
+
+      <Card>
+        <div style={{ borderBottom:`1px solid ${T.border}`,display:"flex",padding:"0 20px" }}>
+          <TabBtn id="widget" icon="🌐" label="Web Widget" />
+          <TabBtn id="zalo"   icon="💙" label="Zalo OA" />
+        </div>
+
+        {/* Web Widget */}
+        {tab==="widget" && (
+          <div style={{ padding:24,display:"flex",gap:24 }}>
+            {/* Config form */}
+            <div style={{ flex:1,display:"flex",flexDirection:"column",gap:16 }}>
+              <div style={{ fontWeight:700,fontSize:14,color:T.text }}>Cấu hình Web Widget</div>
+
+              {[
+                { label:"Màu chủ đạo (Primary Color)", key:"primaryColor", type:"color" },
+                { label:"Vị trí widget", key:"position", type:"select", opts:["bottom-right","bottom-left","top-right","top-left"] },
+              ].map(f=>(
+                <div key={f.key}>
+                  <label style={{ fontSize:12,fontWeight:600,color:T.textMid,display:"block",marginBottom:5 }}>{f.label}</label>
+                  {f.type==="color"
+                    ? <div style={{ display:"flex",gap:10,alignItems:"center" }}>
+                        <input type="color" value={widgetCfg[f.key]} onChange={e=>setWidgetCfg({...widgetCfg,[f.key]:e.target.value})} style={{ width:48,height:36,borderRadius:6,border:`1px solid ${T.border}`,cursor:"pointer" }} />
+                        <span style={{ fontSize:13,fontFamily:"monospace",color:T.text }}>{widgetCfg[f.key]}</span>
+                      </div>
+                    : <select value={widgetCfg[f.key]} onChange={e=>setWidgetCfg({...widgetCfg,[f.key]:e.target.value})} style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 10px",fontSize:12 }}>
+                        {f.opts.map(o=><option key={o}>{o}</option>)}
+                      </select>
+                  }
+                </div>
+              ))}
+
+              <div>
+                <label style={{ fontSize:12,fontWeight:600,color:T.textMid,display:"block",marginBottom:5 }}>Lời chào mở đầu</label>
+                <textarea value={widgetCfg.greeting} onChange={e=>setWidgetCfg({...widgetCfg,greeting:e.target.value})} rows={2}
+                  style={{ width:"100%",border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 12px",fontSize:12,resize:"none",outline:"none",boxSizing:"border-box" }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize:12,fontWeight:600,color:T.textMid,display:"block",marginBottom:5 }}>Placeholder input</label>
+                <Input value={widgetCfg.placeholder} onChange={e=>setWidgetCfg({...widgetCfg,placeholder:e.target.value})} />
+              </div>
+
+              <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                {[
+                  ["showBranding","Hiển thị logo Remak trong widget"],
+                  ["collectName","Thu thập tên khách"],
+                  ["collectPhone","Thu thập SĐT khách"],
+                  ["autoOpen","Tự động mở widget sau khi load"],
+                ].map(([key,label])=>(
+                  <label key={key} style={{ display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:12,color:T.text }}>
+                    <div onClick={()=>setWidgetCfg({...widgetCfg,[key]:!widgetCfg[key]})}
+                      style={{ width:40,height:22,borderRadius:11,background:widgetCfg[key]?T.green:T.border,cursor:"pointer",position:"relative",flexShrink:0 }}>
+                      <div style={{ width:18,height:18,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:widgetCfg[key]?20:2,transition:"left .2s" }} />
+                    </div>
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              <Btn variant="primary" style={{ alignSelf:"flex-start" }} onClick={()=>showToast("Cấu hình widget đã lưu & deploy")}>💾 Lưu & Deploy</Btn>
+
+              {/* Embed code */}
+              <div>
+                <div style={{ fontSize:12,fontWeight:700,color:T.textMid,marginBottom:6 }}>Embed Code — Copy vào &lt;head&gt; website</div>
+                <div style={{ position:"relative" }}>
+                  <pre style={{ background:"#1a1a2e",color:"#7EE8A2",padding:14,borderRadius:8,fontSize:11,fontFamily:"monospace",overflowX:"auto",margin:0 }}>{widgetCode}</pre>
+                  <Btn variant="secondary" size="sm" style={{ position:"absolute",top:8,right:8 }} onClick={()=>showToast("Đã copy embed code")}>📋 Copy</Btn>
+                </div>
+              </div>
+            </div>
+
+            {/* Widget preview */}
+            <div style={{ width:280,flexShrink:0 }}>
+              <div style={{ fontSize:12,fontWeight:700,color:T.textMid,marginBottom:10 }}>Preview Widget</div>
+              <div style={{ background:"#F0F4F8",borderRadius:12,padding:16,minHeight:480,position:"relative",border:`1px solid ${T.border}` }}>
+                {/* Mock website bg */}
+                <div style={{ background:"#fff",borderRadius:6,padding:12,marginBottom:8,fontSize:11,color:T.textLight }}>
+                  tieuam.com — Trang chủ<br/><br/>
+                  <div style={{ height:40,background:T.bg,borderRadius:4,marginBottom:4 }} />
+                  <div style={{ height:24,background:T.bg,borderRadius:4,marginBottom:4,width:"70%" }} />
+                  <div style={{ height:24,background:T.bg,borderRadius:4,width:"50%" }} />
+                </div>
+                {/* Chat widget preview */}
+                <div style={{ position:"absolute",[widgetCfg.position.includes("bottom")?"bottom":"top"]:16,[widgetCfg.position.includes("right")?"right":"left"]:16,width:240 }}>
+                  <div style={{ background:"#fff",border:`1px solid ${T.border}`,borderRadius:12,boxShadow:"0 4px 20px rgba(0,0,0,.15)",overflow:"hidden" }}>
+                    <div style={{ background:widgetCfg.primaryColor,padding:"10px 14px",color:"#fff" }}>
+                      <div style={{ fontSize:12,fontWeight:700 }}>Remak AI Assistant</div>
+                      <div style={{ fontSize:9,opacity:0.8 }}>Trợ lý tư vấn thông minh</div>
+                    </div>
+                    <div style={{ padding:10,background:"#F8FAF6",minHeight:100 }}>
+                      <div style={{ background:"#fff",border:`1px solid ${T.border}`,borderRadius:"10px 10px 10px 2px",padding:"8px 10px",fontSize:10,color:T.text,maxWidth:"80%",marginBottom:6 }}>
+                        {widgetCfg.greeting.slice(0,60)}...
+                      </div>
+                    </div>
+                    <div style={{ padding:"8px 10px",borderTop:`1px solid ${T.border}`,display:"flex",gap:6 }}>
+                      <input placeholder={widgetCfg.placeholder} style={{ flex:1,border:`1px solid ${T.border}`,borderRadius:16,padding:"4px 10px",fontSize:10,outline:"none" }} />
+                      <div style={{ width:26,height:26,borderRadius:"50%",background:widgetCfg.primaryColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0 }}>↑</div>
+                    </div>
+                    {widgetCfg.showBranding && <div style={{ textAlign:"center",padding:"4px 0",fontSize:8,color:T.textLight }}>Powered by Remak AI</div>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Zalo OA */}
+        {tab==="zalo" && (
+          <div style={{ padding:24,display:"flex",flexDirection:"column",gap:16,maxWidth:640 }}>
+            <div style={{ display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:8,background:zaloCfg.connected?T.greenLight:T.redLight,border:`1px solid ${zaloCfg.connected?T.greenMid:"#FECACA"}` }}>
+              <span style={{ fontSize:24 }}>💙</span>
+              <div>
+                <div style={{ fontWeight:700,fontSize:13,color:zaloCfg.connected?T.greenDark:T.red }}>{zaloCfg.connected?"✅ Đã kết nối Zalo OA":"❌ Chưa kết nối"}</div>
+                {zaloCfg.connected && <div style={{ fontSize:11,color:T.textMid }}>Last sync: {zaloCfg.lastSync} · Webhook: Active</div>}
+              </div>
+              {zaloCfg.connected && <Btn variant="secondary" size="sm" style={{ marginLeft:"auto" }} onClick={()=>showToast("Đã ngắt kết nối Zalo OA","info")}>Ngắt kết nối</Btn>}
+            </div>
+
+            {[
+              { label:"OA ID", key:"oaId", placeholder:"123456789" },
+              { label:"App ID", key:"appId", placeholder:"oa_app_xxx" },
+              { label:"App Secret", key:"appSecret", placeholder:"••••••••••••", type:"password" },
+              { label:"Webhook Secret", key:"webhookSecret", placeholder:"••••••••••••", type:"password" },
+            ].map(f=>(
+              <div key={f.key}>
+                <label style={{ fontSize:12,fontWeight:600,color:T.textMid,display:"block",marginBottom:5 }}>{f.label}</label>
+                <Input placeholder={f.placeholder} value={zaloCfg[f.key]} onChange={e=>setZaloCfg({...zaloCfg,[f.key]:e.target.value})} icon={f.type==="password"?"🔒":undefined} />
+              </div>
+            ))}
+
+            <div>
+              <label style={{ fontSize:12,fontWeight:600,color:T.textMid,display:"block",marginBottom:5 }}>Webhook URL (copy vào Zalo Developer Console)</label>
+              <div style={{ display:"flex",gap:8 }}>
+                <Input value={zaloCfg.webhookUrl} style={{ flex:1 }} />
+                <Btn variant="secondary" size="sm" onClick={()=>showToast("Đã copy webhook URL")}>📋</Btn>
+              </div>
+            </div>
+
+            <div style={{ background:T.bg,borderRadius:8,padding:14 }}>
+              <div style={{ fontSize:12,fontWeight:700,color:T.textMid,marginBottom:8 }}>Sự kiện Zalo Webhook</div>
+              {[["user_send_text","Người dùng gửi tin nhắn văn bản","✅"],["user_send_image","Người dùng gửi ảnh","✅"],["user_follow_oa","Người dùng follow OA","✅"],["user_unfollow_oa","Người dùng unfollow OA","⚠️"]].map(([ev,desc,st])=>(
+                <div key={ev} style={{ display:"flex",gap:10,padding:"5px 0",borderBottom:`1px solid ${T.border}`,fontSize:11 }}>
+                  <span style={{ fontSize:12 }}>{st}</span>
+                  <span style={{ fontFamily:"monospace",color:T.blue,minWidth:150 }}>{ev}</span>
+                  <span style={{ color:T.textMid }}>{desc}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display:"flex",gap:10 }}>
+              <Btn variant="secondary" onClick={()=>showToast("Đang test webhook...")}>🧪 Test Webhook</Btn>
+              <Btn variant="primary" onClick={()=>showToast("Cấu hình Zalo OA đã lưu")}>💾 Lưu cấu hình</Btn>
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 const PAGE_META = {
-  dashboard:        { title: "Tổng quan",                            bread: "Admin" },
-  users:            { title: "Quản lý Người dùng & Role Profile",    bread: "Admin › Quản lý Người dùng" },
-  kb_upload:        { title: "KB – Tải lên tài liệu",                bread: "Admin › Knowledge Base › Tài liệu" },
-  kb_tags:          { title: "KB – Danh mục & Tag",                   bread: "Admin › Knowledge Base › Phân loại" },
-  ncc_review:       { title: "Duyệt tài liệu NCC",                   bread: "Admin › Knowledge Base › NCC Review" },
-  products_view:    { title: "Sản phẩm — ERP Gold Sync",             bread: "Admin › Sản phẩm" },
-  supplier_portal:  { title: "NCC Supplier Portal — Upload tài liệu",bread: "NCC › Tài liệu sản phẩm" },
+  dashboard:        { title: "Tổng quan",                              bread: "Admin" },
+  conversations:    { title: "Hội thoại",                              bread: "Admin › Hội thoại" },
+  quotes:           { title: "Báo giá tự động",                        bread: "Admin › Báo giá" },
+  products_view:    { title: "Sản phẩm — ERP Gold Sync",               bread: "Admin › Sản phẩm" },
+  users:            { title: "Quản lý Người dùng & Role Profile",      bread: "Admin › Người dùng" },
+  kb_upload:        { title: "KB – Tải lên tài liệu",                  bread: "Admin › Knowledge Base › Tài liệu" },
+  kb_tags:          { title: "KB – Danh mục & Tag",                     bread: "Admin › Knowledge Base › Phân loại" },
+  ncc_review:       { title: "Duyệt tài liệu NCC",                     bread: "Admin › Knowledge Base › NCC Review" },
+  supplier_portal:  { title: "NCC Supplier Portal — Upload tài liệu",  bread: "NCC › Tài liệu sản phẩm" },
+  prompt_config:    { title: "Prompt Store & AI Monitor",               bread: "Admin › Hệ thống › AI Config" },
+  routing_rules:    { title: "Routing Rules & Notification",            bread: "Admin › Hệ thống › Routing" },
+  audit_log:        { title: "Audit Log & PII Masking",                 bread: "Admin › Hệ thống › Bảo mật" },
+  channel_config:   { title: "Channel Integration — Widget & Zalo OA", bread: "Admin › Kênh" },
   login:            { title: "Đăng nhập", bread: "" },
 };
 
@@ -5062,11 +6376,17 @@ export default function RemakAdminPortal() {
     switch (active) {
       case "dashboard":      return <Dashboard />;
       case "users":          return <UserManagement />;
+      case "conversations":   return <ConversationsPage />;
+      case "quotes":          return <QuotesPage />;
       case "kb_upload":       return <KBUpload />;
       case "kb_tags":         return <KBTags />;
       case "ncc_review":      return <NCCReview />;
       case "products_view":   return <ProductPage />;
       case "supplier_portal": return <SupplierPortal />;
+      case "prompt_config":   return <PromptConfigPage />;
+      case "routing_rules":   return <RoutingRulesPage />;
+      case "audit_log":       return <AuditLogPage />;
+      case "channel_config":  return <ChannelConfigPage />;
       default:
         return (
           <div style={{ padding: 28 }}>
