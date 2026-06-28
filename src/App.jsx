@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const T = {
@@ -328,12 +328,12 @@ const LoginPage = ({ onLogin }) => {
   const [passMatch, setPassMatch]   = useState(null);
 
   // Countdown timer
-  React.useEffect(() => {
+  useEffect(() => {
     if (countdown <= 0) return;
     const t = setTimeout(() => setCountdown(c => c-1), 1000);
     return () => clearTimeout(t);
   }, [countdown]);
-  React.useEffect(() => {
+  useEffect(() => {
     if (countdown === 0 && locked) { setLocked(false); setAttempts(0); setError(""); }
   }, [countdown, locked]);
 

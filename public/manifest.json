@@ -1,0 +1,8 @@
+{
+  "short_name": "Remak Admin",
+  "name": "Remak Admin Portal",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#6DB02B",
+  "background_color": "#F4F6F3"
+}
